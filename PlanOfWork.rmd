@@ -4,8 +4,6 @@ Tidying the data, whether we should choose how to sample from the data or use th
 
 Using gender to draw conclusions across numerous variables?
 
-Gantt chart.
-
 Stsacked bar chart to show the overall distribution of time uses and how that has changed over time. Looking at generations.
 
 Splitting work:
