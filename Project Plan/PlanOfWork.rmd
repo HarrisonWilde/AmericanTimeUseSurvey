@@ -1,0 +1,32 @@
+Talk about changes over time between variables. Finding the best way to pull data together, picking a big group which are all related or some smaller groups which are only informative amongst themselves.
+
+Tidying the data, whether we should choose how to sample from the data or use the whole population.
+
+Using gender to draw conclusions across numerous variables?
+
+Stacked bar chart to show the overall distribution of time uses and how that has changed over time. Looking at generations.
+
+Splitting work:
+
++ Someone who wants to do graphics
++ Analysis of graphics
++ Discussing how decisions were made
++ Different types of analysis
+	+ PCA
+	+ Graphical
+	+ Etc.
++ Who will build the document and put the pieces together
++ Presentation should be put together as a group to divide up speaking parts
+
+# Plan
+
++ Splitting tasks
++ Exploratory analysis
+	+ Graphically, using PCA, other mathematical methods
++ Gantt chart
+	+ Exploratory
+	+ Presentation creation and planning
+	+ Further analysis once the variables have been chosen, also the decision on how many variables etc.
+	+ Writing the document
+	+ Risks, risk allowance and proof reading of documents and other tasks to polish
++ Presentation, which speaking parts and summarising the analysis and work we have done

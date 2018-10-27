@@ -1,0 +1,19 @@
+---
+title: "ST334 Group July Project Plan"
+author: "Group July"
+date: "27 October 2018"
+output: pdf_document
+geometry: left=2cm, right=2cm, top=2cm, bottom=2cm
+urlcolor: blue
+fig_caption: yes
+---
+
+# Deliverables
+
+### Gannt Chart of Group July's Project Schedule:
+![Gantt Chart of Group July's Project Schedule](gantt.png)
+*\*  subject to review weekly*  
+  
+#Methodology
+
+#Risks
