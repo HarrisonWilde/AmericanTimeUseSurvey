@@ -9,6 +9,7 @@ fig_caption: yes
 ---
 
 # The Task
+
 "To explore the ATUS data and provide a report that will inform the newspaper’s journalists, about some of the main changes that have occurred in relation to how people spend their time — if indeed there do appear to be any such changes"
 
 # Deliverables
@@ -16,9 +17,9 @@ fig_caption: yes
 ### Gannt Chart of Group July's Project Schedule:
 ![Gantt Chart of Group July's Project Schedule](gantt.png)
 *\*  subject to review weekly*  
-  
+
 #Methodology
 
-The nature of this project means that exploratory data analysis is vital. Therefore, at the planning stage we cannot know exactly how and what we will be analysing in the dataset. For this reason we will be following a variation of the agile project management methodoogy. This will alow us to be flexible in our approach, performing exploratory analysis in stages to ensure we are able to provide the most rigourous and intersting conclusions. 
+The nature of this project means that exploratory data analysis is vital. Therefore, at the planning stage we cannot know exactly how and what we will be analysing in the dataset. For this reason we will be following a variation of the agile project management methodology. This will allow us to be flexible in our approach, performing exploratory analysis in stages to ensure we are able to provide the most rigorous and interesting conclusions. This will include us meeting weekly to monitor progress and review our plan.
 
 #Risks
