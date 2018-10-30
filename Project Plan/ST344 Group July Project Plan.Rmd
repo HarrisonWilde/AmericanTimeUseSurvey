@@ -16,7 +16,9 @@ The American Time Use Survey (ATUS) is a study run continuously by the US Bureau
 
 \begin{center} \textbf{Figure 1: Gantt Chart of Group July's Project Schedule \textit{(subject to review at meetings)}} \end{center}
 
-The nature of this project means that exploratory data analysis is vital: deeper analysis cannot begin until the relationship(s) for further investigation have been identified. For this reason a variation of the agile project management methodology will be followed. This will allow for a flexible approach, performing exploratory analysis in stages to ensure the most rigorous and interesting conclusions are reached. Hourly meetings are scheduled every Wednesday (marked in grey on the Gantt chart) for the duration, with additional scheduled towards the end to ensure deliverables are on track for completion. Progress reports and outlooks will also comprise part of these meetings.
+The nature of this project means that exploratory data analysis is vital: deeper analysis cannot begin until the relationship(s) for further investigation have been identified. For this reason a variation of the agile project management methodology will be followed. This will allow for a flexible approach, performing exploratory analysis in stages to ensure the most rigorous and interesting conclusions are reached.
+
+Hourly meetings are scheduled every Wednesday (marked in grey on the Gantt chart) for the duration, with additional scheduled towards the end to ensure deliverables (marked in green and blue) are on track for completion. Progress reports and outlooks will also comprise part of these meetings.
 
 ## Risks
 
