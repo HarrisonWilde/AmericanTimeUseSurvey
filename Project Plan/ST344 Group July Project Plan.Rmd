@@ -10,7 +10,7 @@ fontsize: 9pt
 
 ## The Task
 
-The American Time Use Survey (ATUS) is a study run continuously by the US Bureau of Labour Statistics for the past 15 years, asking respondents how they spent their time on the previous day. Our task is to explore the ATUS data and provide a report that will inform a US newspaper’s journalists, about some of the main changes that have occurred in relation to how people spend their time — if indeed there do appear to be any such changes. The project is finalised with a presentation of our findings.
+The American Time Use Survey (ATUS) is a study run continuously by the US Bureau of Labour Statistics for the past 15 years, asking respondents how they spent their time on the previous day. The task is to explore the ATUS data and provide a report that will inform a US newspaper’s journalists, about some of the main changes that have occurred in relation to how people spend their time — if indeed there do appear to be any such changes. The project is finalised with a presentation of our findings.
 
 ## Schedule and Methodology
 
@@ -18,9 +18,9 @@ The American Time Use Survey (ATUS) is a study run continuously by the US Bureau
 ![Gantt Chart of Group July's Project Schedule](gantt.png)
 *\*  subject to review at weekly meetings*  
 
-The nature of this project means that exploratory data analysis is vital. Therefore, at the planning stage we cannot know exactly how and what we will be analysing in the dataset. For this reason we will be following a variation of the agile project management methodology. This will allow us to be flexible in our approach, performing exploratory analysis in stages to ensure we are able to provide the most rigorous and interesting conclusions.
+The nature of this project means that exploratory data analysis is vital. Therefore, at the planning stage it is impossible to know exactly how and what the dataset would be analysed. For this reason, it would lead to a variation of the agile project management methodology. This will allow more flexiblility in the approach, performing exploratory analysis in stages to ensure it is able to provide the most rigorous and interesting conclusions.
 
-Hourly meetings are scheduled every Wednesday for the entirety, with additional scheduled for Monday 26th November and Monday 3rd December to ensure we are on track to complete the deliverables. We will review progress over the previous week and outlook on the coming week.
+Hourly meetings are scheduled every Wednesday for the entirety, with additional scheduled for Monday 26th November and Monday 3rd December to ensure the deliverables. We will review progress over the previous week and outlook on the coming week.
 
 ## Risks
 
