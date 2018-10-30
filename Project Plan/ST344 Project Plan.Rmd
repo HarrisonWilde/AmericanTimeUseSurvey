@@ -1,0 +1,25 @@
+---
+title: "ST334 Group July Project Plan"
+author: "Group July"
+output: pdf_document
+geometry: left=1cm, right=1cm, top=0.5cm, bottom=0.5cm
+urlcolor: blue
+fig_caption: yes
+fontsize: 9pt
+---
+
+## The Task
+The American Time Use Survey (ATUS) is a study run continuously by the US Bureau of Labour Statistics for the past 15 years, asking respondents how they spent their time on the previous day. Our task is to explore the ATUS data and provide a report that will inform a US newspaper’s journalists, about some of the main changes that have occurred in relation to how people spend their time — if indeed there do appear to be any such changes. The project is finalised with a presentation of our findings.
+
+## Schedule and Methodology
+### Gannt Chart of Group July's Project Schedule:
+![Gantt Chart of Group July's Project Schedule](gantt.png)
+*\*  subject to review at weekly meetings*  
+The nature of this project means that exploratory data analysis is vital. Therefore, at the planning stage we cannot know exactly how and what we will be analysing in the dataset. For this reason we will be following a variation of the agile project management methodology. This will allow us to be flexible in our approach, performing exploratory analysis in stages to ensure we are able to provide the most rigorous and interesting conclusions. Hourly meetings are scheduled every Wednesday for the entirety, with additional scheduled for Monday 26th November and Monday 3rd December to ensure we are on track to complete the deliverables. We will review progress over the previous week and outlook on the coming week.
+
+## Risks
+The major risk to this project are that there are unforeseen delays in the exploratory data analysis. This is the most vital part of our project as our deeper data analysis cannot begin until we have identified the relationship(s) that we want to investigate further. To this end, we have added in time buffers and contingencies such that the work will be completed.
+
+Another major risk is that one of our team members falls ill unexpectedly. To avoid this being an issue, the workplan was developed such that there is a balanced load on each member and our GitHub strategy means that their work can be obtained by any other team member.If necessary, we could rearrange the meeting dates.
+
+As with any group project, there is always the risk of a lack of communication causing a task to be done twice; unnecessarily. Our use of GitHub's project management tools (including repositories and Kanban board) will allow us to mitigate these mistakes and enable collaboration.
