@@ -8,3 +8,4 @@ out of the 100,000+. Therefore, there is a risk that these 1000 datapoints might
 solve an issue like this? (it is certain columns)
 - Do graphics have to be static on our final pdf or can they move if things are hovered over them (will it be opened in adobe acrobat)?
 - Structure to final report: how to include exploratory data analysis
+- Average hours per day, VS Average hours per day for who engaged in the activity, VS Average percent per day for who engaged
