@@ -1,0 +1,8 @@
+# These questions are for meeting 14/11 with DF
+
+- PCA not working due to the variance being too low. What are your suggestions to fix this?
+- Best use of weights?
+-  After cleaning, tidying and removing missing datapoints, it was found that there were only around 1000 complete samples 
+out of the 100,000+. Therefore, there is a risk that these 1000 datapoints might not be truly representative, how would you
+solve an issue like this?
+- Do graphics have to be static on our final pdf or can they move if things are hovered over them?
