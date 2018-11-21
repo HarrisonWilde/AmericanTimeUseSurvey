@@ -1,0 +1,33 @@
+---
+title:  |
+    | How Americans’ Time-use Patterns Changed over the Period 2003 - 2017
+author: "Group July"
+date: "26 November 2018"
+geometry: left=2cm, right=2cm, top=2cm, bottom=2cm
+output: pdf_document
+indent: TRUE
+urlcolor: blue
+bibliography: Final Report References.bib
+header-includes:
+   - \usepackage{animate}
+---
+
+#Abstract
+
+
+
+#Introduction
+
+The aim of this report is to discover how americans' time-use patterns have changed over the last 15 years or so. The datasets ([1](https://www.bls.gov/tus/special.requests/atussum_0317.zip) & [2](https://www.bls.gov/tus/special.requests/atusresp_0317.zip)) used to try and tackle this are results of the American Time Use Survey (ATUS) [@ATUS]. ATUS respondents are interviewed only one time about how they spent their time on the previous day, where they were, and whom they were with. The survey records the time spent on 431 different activities which are grouped into 17 different categories. In the analysis these categories will often be refered to by variable beginning with **tu** followed by a two-digit **category number**. The meaning of each category number can be found on the [ATUS website](https://www.bls.gov/tus/lexiconnoex0317.pdf).
+
+The [Beareau of Labor Statistics website](https://www.bls.gov/tus/charts.htm) provides a number of simple charts, looking at the 2017 annual average for these categories. This report provides a more definitive conclusion on how time-use patterns changed over the period, evidenced with statistical investigation of the data. The findings explain in depth where some of the biggest fluctuations are and briefly note possible links within the data. Limitations to the analysis are noted when appropriate and these must be taken into account when performing any further analysis or summaries; mentioned with any conclusions.   
+
+#Exploratory Analysis
+
+
+
+#Analysis
+
+
+
+#References
