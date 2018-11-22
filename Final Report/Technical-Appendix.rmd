@@ -1,0 +1,93 @@
+---
+title: "Technical Appendix"
+author: "CK"
+date: "22/11/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rio)
+library(ggplot2)
+library(lubridate)
+library(zoo)
+library(dplyr)
+library(splines)
+```
+
+```{r}
+# Import ATUS Summary file
+ATUS.SUM <- import('atussum_0317.csv', setclass = "tibble")
+# Import ATUS CPS File
+ATUS.CPS <- import('atuscps_0317.csv', setclass = "tibble")
+# Remove the month of July from the summary file data to be left as a confirmatory month
+ATUS.SUM$month <- as.numeric(substr(ATUS.SUM$TUCASEID, 5, 6))
+ATUS.SUM.Filtered <- filter(ATUS.SUM, month != 07)
+# Remove the even year for further confirmatory analysis
+ATUS.SUM.Filtered <- filter(ATUS.SUM.Filtered, month%%2 == 0)
+# Filter CPS down to just releavant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
+ATUS.CPS.States <- select(ATUS.CPS, TUCASEID, GESTFIPS, GEDIV, GEREG)
+# Create variables to be added to a data frame with relevant gender activities 
+Working <- ATUS.SUM.Filtered[, grep("^t05", names(ATUS.SUM.Filtered))]
+House.Maintenance <- ATUS.SUM.Filtered[, grep("^t0204", names(ATUS.SUM.Filtered))]
+Vehicle.Maintenance <- ATUS.SUM.Filtered[, grep("^t0207", names(ATUS.SUM.Filtered))]
+Housework <- ATUS.SUM.Filtered[, grep("^t0201", names(ATUS.SUM.Filtered))]
+Food.Prep <- ATUS.SUM.Filtered[, grep("^t0202", names(ATUS.SUM.Filtered))] + ATUS.SUM.Filtered$t070101 + ATUS.SUM.Filtered$t070103
+Childcare <- ATUS.SUM.Filtered[, grep("^t03", names(ATUS.SUM.Filtered))]
+```
+```{r}
+# Create a data frame from relevant variables within ATUS Summary
+# Childnum there for future use
+Gender.Roles.Data <- select(ATUS.SUM.Filtered, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TRCHILDNUM)
+# Join this dataset with the CPS states info by unique id number of particiapnt
+# Add in relevant categories
+Gender.Roles.Data$Working <- rowSums(Working)
+Gender.Roles.Data$House.Maintenance <- rowSums(House.Maintenance)
+Gender.Roles.Data$Vehicle.Maintenance <- rowSums(Vehicle.Maintenance)
+Gender.Roles.Data$Housework <- rowSums(Housework)
+Gender.Roles.Data$Food.Prep <- rowSums(Food.Prep)
+Gender.Roles.Data$Childcare <- rowSums(select(Childcare, t030101:t030399))
+# Join this dataset with the CPS states info by unique id number of particiapnt
+Gender.Roles.Data <- left_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASEID')
+Gender.Roles.Data <- filter(Gender.Roles.Data)
+Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 1] <- "M"
+Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 2] <- "F"
+```
+
+```{r}
+Gender.Roles.Data.Male <- filter(Gender.Roles.Data, TESEX == "M")
+Gender.Roles.Data.Female<- filter(Gender.Roles.Data, TESEX == "F")
+for (year in unique(Gender.Roles.Data$TUYEAR)) {
+  yearly.dataset <- filter(Gender.Roles.Data.Male, TUYEAR ==  year)
+  bottom.sum <- sum(yearly.dataset$TUFNWGTP)
+  top.sum <- sum(yearly.dataset$TUFNWGTP *yearly.dataset$Childcare)
+  weighted.childcare <- top.sum / bottom.sum
+  filter(Gender.Roles.Data.Male, TUYEAR == year)$weighted.childcare <- weighted.childcare
+  
+  bottom.sum <- sum(filter(Gender.Roles.Data.Female, TUYEAR == year)$TUFNWGTP)
+  top.sum <- sum(filter(Gender.Roles.Data.Female, TUYEAR == year)$TUFNWGTP * filter(Gender.Roles.Data.Female, TUYEAR == year)$Childcare)
+  weighted.childcare <- top.sum / bottom.sum
+  filter(Gender.Roles.Data.Female, TUYEAR == year)$TUFNWGTP$weighted.childcare <- weighted.childcare
+}
+```
+
+```{r}
+# Start building models for the data
+n <- nrow(Gender.Roles.Data)
+model1 <- glm(Childcare ~ ns(TEAGE, knots = 20 * (1:4)), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+model2 <- update(model1, . ~ . + TESEX)
+model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TEAGE, knots = 20*(1:4)))
+# Use same method as in lab 5 to plot them
+male.prediction.childcare <- predict.glm(model3, newdata = Gender.Roles.Data.Male, se = TRUE, type = "response")
+
+female.prediction.childcare <- predict.glm(model3, newdata = Gender.Roles.Data.Female, se = TRUE, type = "response")
+
+df <- data.frame(age = c(Gender.Roles.Data.Male$TEAGE, Gender.Roles.Data.Female$TEAGE), 
+                 prediction = c(male.prediction.childcare$fit, female.prediction.childcare$fit),
+                 prediction_error = c(1.96*male.prediction.childcare$se.fit, 1.96*female.prediction.childcare$se.fit),
+                 type = c(rep("M", nrow(Gender.Roles.Data.Male)), rep("F", nrow(Gender.Roles.Data.Female)))
+)
+model3_plot <- ggplot(df, aes(x=age, y=prediction, colour=type))  + geom_line() + 
+  geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.25)
+model3_plot
+```
