@@ -13,10 +13,6 @@ header-includes:
    - \usepackage{animate}
 ---
 
-# Abstract
-
-
-
 # Introduction
 
 The aim of this report is to discover how Americans' time-use patterns have changed over the last 15 years or so. The datasets ([1](https://www.bls.gov/tus/special.requests/atussum_0317.zip) & [2](https://www.bls.gov/tus/special.requests/atusresp_0317.zip)) used to try and tackle this are results of the American Time Use Survey (ATUS) [@ATUS]. ATUS respondents are interviewed only one time about how they spent their time on the previous day, where they were, and whom they were with. The survey records the time spent on 431 different activities which are grouped into 17 different categories. In the analysis these categories will often be refered to by variable beginning with **tu** followed by a two-digit **category number**. The meaning of each category number can be found on the [ATUS website](https://www.bls.gov/tus/lexiconnoex0317.pdf).
