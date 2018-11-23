@@ -25,7 +25,7 @@ ATUS.RES <- import('atusresp_0317.csv', setclass = "tibble")
 # Create a diary date column
 Diary.Date <- select(ATUS.RES, TUCASEID, TUDIARYDATE)
 ATUS.SUM <- left_join(ATUS.SUM, Diary.Date, by = 'TUCASEID')
-ATUS.SUM$TUDIARYDATE <- format(as.Date(as.character(ATUS.SUM$TUDIARYDATE), "%Y%m%d"), "%Y%m")
+ATUS.SUM$TUDIARYDATE <- format(as.Date(as.character(ATUS.SUM$TUDIARYDATE), "%Y%m%d"), "%Y-%m")
 # Add months as a column as a derivative of the TUCASEID variable
 ATUS.SUM$month <- as.numeric(substr(ATUS.SUM$TUCASEID, 5, 6))
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
@@ -38,10 +38,11 @@ Housework <- ATUS.SUM[, grep("^t0201", names(ATUS.SUM))]
 Food.Prep <- ATUS.SUM[, grep("^t0202", names(ATUS.SUM))] + ATUS.SUM$t070101 + ATUS.SUM$t070103
 Childcare <- ATUS.SUM[, grep("^t03", names(ATUS.SUM))]
 ```
+
 ```{r}
 # Create a data frame from relevant variables within ATUS Summary
 # Childnum there for future use
-Gender.Roles.Data <- select(ATUS.SUM, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TRCHILDNUM, month)
+Gender.Roles.Data <- select(ATUS.SUM, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TRCHILDNUM, month, TUDIARYDATE)
 # Join this dataset with the CPS states info by unique id number of particiapnt
 # Add in relevant categories
 Gender.Roles.Data$Working <- rowSums(Working)
@@ -57,7 +58,7 @@ Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 1] <- "M"
 Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 2] <- "F"
 ```
 
-```{r}
+```{r, cache = TRUE}
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Prep", "Childcare")) {
 	Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
 	for (sex in c("M", "F")) {
@@ -80,21 +81,18 @@ Gender.Roles.Validate <- filter(Gender.Roles.Data, month %% 2 != 0)
 ```{r}
 # Start building models for the data
 n <- nrow(Gender.Roles.Train)
-model1 <- glm(weighted.Childcare ~ ns(, knots = 20 * (1:4)), data = Gender.Roles.Train, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+model1 <- glm(weighted.Childcare ~ ns(TUDIARYDATE), data = Gender.Roles.Train, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
 model2 <- update(model1, . ~ . + TESEX)
-model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TEAGE, knots = 20*(1:4)))
+model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE))
 # Use same method as in lab 5 to plot them
 male.prediction.childcare <- predict.glm(model3, newdata = filter(Gender.Roles.Train, TESEX == 'M'), se = TRUE, type = "response")
 
 female.prediction.childcare <- predict.glm(model3, newdata = filter(Gender.Roles.Train, TESEX == 'F'), se = TRUE, type = "response")
 
-df <- data.frame(age = c(filter(Gender.Roles.Train, TESEX == 'M')$TEAGE, filter(Gender.Roles.Train, TESEX == 'F')$TEAGE), 
-                 prediction = c(male.prediction.childcare$fit, female.prediction.childcare$fit),
-                 date = c(filter(Gender.Roles.Train, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Train, TESEX == 'F')$TUDIARYDATE),
-                 prediction_error = c(1.96*male.prediction.childcare$se.fit, 1.96*female.prediction.childcare$se.fit),
-                 type = c(filter(Gender.Roles.Train, TESEX == 'M')$TESEX, filter(Gender.Roles.Train, TESEX == 'F')$TESEX))
+df <- data.frame(age = c(filter(Gender.Roles.Train, TESEX == 'M')$TEAGE, filter(Gender.Roles.Train, TESEX == 'F')$TEAGE), prediction = c(male.prediction.childcare$fit, female.prediction.childcare$fit), date = c(filter(Gender.Roles.Train, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Train, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction.childcare$se.fit, 1.96*female.prediction.childcare$se.fit), type = c(filter(Gender.Roles.Train, TESEX == 'M')$TESEX, filter(Gender.Roles.Train, TESEX == 'F')$TESEX))
 
-model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type))  + geom_line() + 
-  geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.25)
+model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
+geom_line() + 
+geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.25)
 model3_plot
 ```
