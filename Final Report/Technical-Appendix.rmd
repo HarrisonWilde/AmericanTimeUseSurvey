@@ -25,7 +25,7 @@ ATUS.RES <- import('atusresp_0317.csv', setclass = "tibble")
 # Create a diary date column
 Diary.Date <- select(ATUS.RES, TUCASEID, TUDIARYDATE)
 ATUS.SUM <- left_join(ATUS.SUM, Diary.Date, by = 'TUCASEID')
-ATUS.SUM$TUDIARYDATE <- as.Date(as.character(ATUS.SUM$TUDIARYDATE), "%Y%m%d")
+ATUS.SUM$TUDIARYDATE <- format(as.Date(as.character(ATUS.SUM$TUDIARYDATE), "%Y%m%d"), "%Y%m")
 # Add months as a column as a derivative of the TUCASEID variable
 ATUS.SUM$month <- as.numeric(substr(ATUS.SUM$TUCASEID, 5, 6))
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
@@ -84,16 +84,17 @@ model1 <- glm(weighted.Childcare ~ ns(, knots = 20 * (1:4)), data = Gender.Roles
 model2 <- update(model1, . ~ . + TESEX)
 model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TEAGE, knots = 20*(1:4)))
 # Use same method as in lab 5 to plot them
-male.prediction.childcare <- predict.glm(model3, newdata = Gender.Roles.Data.Male, se = TRUE, type = "response")
+male.prediction.childcare <- predict.glm(model3, newdata = filter(Gender.Roles.Train, TESEX == 'M'), se = TRUE, type = "response")
 
-female.prediction.childcare <- predict.glm(model3, newdata = Gender.Roles.Data.Female, se = TRUE, type = "response")
+female.prediction.childcare <- predict.glm(model3, newdata = filter(Gender.Roles.Train, TESEX == 'F'), se = TRUE, type = "response")
 
-df <- data.frame(age = c(Gender.Roles.Data.Male$TEAGE, Gender.Roles.Data.Female$TEAGE), 
+df <- data.frame(age = c(filter(Gender.Roles.Train, TESEX == 'M')$TEAGE, filter(Gender.Roles.Train, TESEX == 'F')$TEAGE), 
                  prediction = c(male.prediction.childcare$fit, female.prediction.childcare$fit),
+                 date = c(filter(Gender.Roles.Train, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Train, TESEX == 'F')$TUDIARYDATE),
                  prediction_error = c(1.96*male.prediction.childcare$se.fit, 1.96*female.prediction.childcare$se.fit),
-                 type = c(rep("M", nrow(Gender.Roles.Data.Male)), rep("F", nrow(Gender.Roles.Data.Female)))
-)
-model3_plot <- ggplot(df, aes(x=age, y=prediction, colour=type))  + geom_line() + 
+                 type = c(filter(Gender.Roles.Train, TESEX == 'M')$TESEX, filter(Gender.Roles.Train, TESEX == 'F')$TESEX))
+
+model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type))  + geom_line() + 
   geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.25)
 model3_plot
 ```
