@@ -39,7 +39,7 @@ Talcott Parsons' **[input BibTex reference here]** view of gender roles, develop
 ```{r, echo=FALSE}
 Male.Activities <- c("Working", "House Maintenance", "Vehicle Maintenance")
 Female.Activities <- c("Housework", "Cooking", "Childcare")
-kable(data.frame(Male.Activities, Female.Activities), format = 'latex', table.env = 'table*', col.names = c("Male Activites", "Female Activities"), align = rep('c', 2)) 
+kable(data.frame(Male.Activities, Female.Activities), col.names = c("Male Activites", "Female Activities"), align = rep('c', 2)) 
 ```
 
 The liberal viewpoint discussed by Parsons suggests an equal balance of time for the genders in these roles. Whilst this study was developed over 50 years ago, a preliminary look at the data confirmed that, in 2003, a complete transition to the liberal viewpoint had not occurred. Therefore, it was decided to investigate whether the time use of these specific activities was heading to an equal split between the genders or whether it is stationary. Of course, it should be noted that 15 years is not a huge length of time to measure this sort of social change, as only a few sets of generations responses are recorded, however, it presents an interesting topic. 
