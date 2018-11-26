@@ -29,9 +29,9 @@ ATUS.SUM$TUMONTH <- as.numeric(substr(ATUS.SUM$TUCASEID, 5, 6))
 # Get birth year as a variable for purpose of classifying generation
 ATUS.SUM$TUBIRTHYEAR <- ATUS.SUM$TUYEAR - ATUS.SUM$TEAGE
 #Classify Generations
-ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation",
-                                ifelse(ATUS.SUM$TUBIRTHYEAR < 1965, "Baby Boomers",
-                                       ifelse(ATUS.SUM$TUBIRTHYEAR < 1981, "Generation X", "Millenials")))
+ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation", 
+    ifelse(ATUS.SUM$TUBIRTHYEAR < 1965, "Baby Boomers",
+        ifelse(ATUS.SUM$TUBIRTHYEAR < 1981, "Generation X", "Millenials")))
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
 ATUS.CPS.States <- select(ATUS.CPS, TUCASEID, GESTFIPS, GEDIV, GEREG)
 ATUS.CPS.States <- distinct(ATUS.CPS.States)
@@ -66,29 +66,32 @@ Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 2] <- "F"
 ```{r, cache=TRUE}
 weighted.valuesM <- c()
 weighted.valuesF <- c()
+Gender.Roles.Differences <- data.frame('Year' = c(), 'Month' = c(), 'Variable' = c(), 'Generation' = c(), 'Region' = c(), 'Difference' = c())
+
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
-	Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
-	for (sex in c("M", "F")) {
-	  for (region in 1:4) {
-  		for (year in unique(Gender.Roles.Data$TUYEAR)) {
-  			for (month in unique(Gender.Roles.Data$TUMONTH)) {
-  			  for(generation in c("Silent Generation", "Baby Boomers", "Generation X", "Millenials")){
-  				Filtered.Data <- filter(Gender.Roles.Data, TESEX == sex, TUYEAR == year, TUMONTH == month, GEREG == region, TUGENERATION == generation)
-  				bottom.sum <- sum(Filtered.Data$TUFNWGTP)
-  				top.sum <- sum(Filtered.Data$TUFNWGTP * Filtered.Data[,variable])
-  				weighted.values <- top.sum / bottom.sum
-  	
-  				Gender.Roles.Data[Gender.Roles.Data$TESEX == sex & Gender.Roles.Data$TUYEAR == year & Gender.Roles.Data$TUMONTH == month & Gender.Roles.Data$GEREG ==  region & Gender.Roles.Data$TUGENERATION == generation, paste0('weighted.', variable)] <- weighted.values
-  				if (Filtered.Data$TESEX[1] == "M") {
-  				  weighted.valuesM <- c(weighted.valuesM, weighted.values)
-  				} else {
-  				  weighted.valuesF <- c(weighted.valuesF, weighted.values)
-  				  }
-  				}
-  			}
-		  }
-	  }
-	}
+    Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
+    for(generation in c("Silent Generation", "Baby Boomers", "Generation X", "Millenials")) {
+        for (region in 1:4) {
+            for (year in unique(Gender.Roles.Data$TUYEAR)) {
+                for (month in unique(Gender.Roles.Data$TUMONTH)) {
+                    for (sex in c("M", "F")) {
+
+                        Filtered.Data <- filter(Gender.Roles.Data, TESEX == sex, TUYEAR == year, TUMONTH == month, GEREG == region, TUGENERATION == generation)
+                        bottom.sum <- sum(Filtered.Data$TUFNWGTP)
+                        top.sum <- sum(Filtered.Data$TUFNWGTP * Filtered.Data[,variable])
+                        weighted.values <- top.sum / bottom.sum
+            
+                        Gender.Roles.Data[Gender.Roles.Data$TESEX == sex & Gender.Roles.Data$TUYEAR == year & Gender.Roles.Data$TUMONTH == month & Gender.Roles.Data$GEREG == region & Gender.Roles.Data$TUGENERATION == generation, paste0('weighted.', variable)] <- weighted.values
+
+                        if (Filtered.Data$TESEX[1] == "F") {
+                            weighted.difference <- Gender.Roles.Data[Gender.Roles.Data$TESEX == 'M' & Gender.Roles.Data$TUYEAR == year & Gender.Roles.Data$TUMONTH == month & Gender.Roles.Data$GEREG == region & Gender.Roles.Data$TUGENERATION == generation, paste0('weighted.', variable)] - weighted.values
+                        }
+                    }
+                    Gender.Roles.Differences <- rbind(Gender.Roles.Differences, data.frame('Year' = year, 'Month' = month, 'Variable' = variable, 'Generation' = generation, 'Region' = region, 'Difference' = weighted.difference))
+                }
+            }
+        }
+    }
 }
 Difference <- abs(weighted.valuesM - weighted.valuesF)
 ```
@@ -102,35 +105,35 @@ Gender.Roles.Validate <- filter(Gender.Roles.Data, TUMONTH %% 2 != 0)
 
 ```{r, cache=TRUE}
 # Make a variable for all years. 
-Dates <- c()
-for(i in 4:17){
-  if(i < 10){
-  Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
-  } else{
-    Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
-  }
+Dates = c()
+for (i in 4:17) {
+    if (i < 10) {
+        Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
+    } else {
+        Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
+    }
 }
 # Commented out lines show how to introduce knots to the models
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
-	# Start building models for the data
-	n <- nrow(Gender.Roles.Train)
-	# model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Gender.Roles.Train, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-	model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Gender.Roles.Train, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-	model2 <- update(model1, . ~ . + TESEX)
-	# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
-	model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	# model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	# Use same method as in lab 5 to plot them
-	# change the model number in the predict functions below for different models
-	male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Train, TESEX == 'M'), se = TRUE, type = "response")
-	female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Train, TESEX == 'F'), se = TRUE, type = "response")
-	df <- data.frame(age = c(filter(Gender.Roles.Train, TESEX == 'M')$TEAGE, filter(Gender.Roles.Train, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Train, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Train, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Train, TESEX == 'M')$TESEX, filter(Gender.Roles.Train, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Train, TESEX == 'M')$GEREG, filter(Gender.Roles.Train, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Train, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Train, TESEX == "F")$TUGENERATION))
-	model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
-	geom_line() + 
-	geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey") 
-	print(model3_plot)
+    # Start building models for the data
+    n <- nrow(Gender.Roles.Train)
+    # model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Gender.Roles.Train, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+    model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Gender.Roles.Train, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+    model2 <- update(model1, . ~ . + TESEX)
+    # model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
+    model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    # Use same method as in lab 5 to plot them
+    # change the model number in the predict functions below for different models
+    male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Train, TESEX == 'M'), se = TRUE, type = "response")
+    female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Train, TESEX == 'F'), se = TRUE, type = "response")
+    df <- data.frame(age = c(filter(Gender.Roles.Train, TESEX == 'M')$TEAGE, filter(Gender.Roles.Train, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Train, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Train, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Train, TESEX == 'M')$TESEX, filter(Gender.Roles.Train, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Train, TESEX == 'M')$GEREG, filter(Gender.Roles.Train, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Train, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Train, TESEX == "F")$TUGENERATION))
+    model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey") 
+    print(model3_plot)
 }
 ```
 Validate the data
@@ -138,34 +141,34 @@ Validate the data
 ```{r, cache=TRUE}
 # Make a variable for all years. 
 Dates <- c()
-for(i in 4:17){
-  if(i < 10){
-  Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
-  } else{
-    Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
-  }
+for (i in 4:17) {
+    if (i < 10) {
+        Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
+    } else {
+        Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
+    }
 }
 # Commented out lines show how to introduce knots to the models
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
-	# Start building models for the data
-	n <- nrow(Gender.Roles.Validate)
-	# model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Gender.Roles.Validate, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-	model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Gender.Roles.Validate, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-	model2 <- update(model1, . ~ . + TESEX)
-	# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
-	model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	# model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	# Use same method as in lab 5 to plot them
-	# change the model number in the predict functions below for different models
-	male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Validate, TESEX == 'M'), se = TRUE, type = "response")
-	female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Validate, TESEX == 'F'), se = TRUE, type = "response")
-	df <- data.frame(age = c(filter(Gender.Roles.Validate, TESEX == 'M')$TEAGE, filter(Gender.Roles.Validate, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Validate, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Validate, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Validate, TESEX == 'M')$TESEX, filter(Gender.Roles.Validate, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Validate, TESEX == 'M')$GEREG, filter(Gender.Roles.Validate, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Validate, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Validate, TESEX == "F")$TUGENERATION))
-	model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
-	geom_line() + 
-	geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey") 
-	print(model3_plot)
+    # Start building models for the data
+    n <- nrow(Gender.Roles.Validate)
+    # model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Gender.Roles.Validate, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+    model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Gender.Roles.Validate, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+    model2 <- update(model1, . ~ . + TESEX)
+    # model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
+    model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    # Use same method as in lab 5 to plot them
+    # change the model number in the predict functions below for different models
+    male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Validate, TESEX == 'M'), se = TRUE, type = "response")
+    female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Validate, TESEX == 'F'), se = TRUE, type = "response")
+    df <- data.frame(age = c(filter(Gender.Roles.Validate, TESEX == 'M')$TEAGE, filter(Gender.Roles.Validate, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Validate, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Validate, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Validate, TESEX == 'M')$TESEX, filter(Gender.Roles.Validate, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Validate, TESEX == 'M')$GEREG, filter(Gender.Roles.Validate, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Validate, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Validate, TESEX == "F")$TUGENERATION))
+    model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey") 
+    print(model3_plot)
 }
 ```
 Do on entire dataset
@@ -173,34 +176,34 @@ Do on entire dataset
 ```{r, cache=TRUE}
 # Make a variable for all years. 
 Dates <- c()
-for(i in 4:17){
-  if(i < 10){
-  Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
-  } else{
-    Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
-  }
+for (i in 4:17) {
+    if (i < 10) {
+        Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
+    } else {
+        Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
+    }
 }
 # Commented out lines show how to introduce knots to the models
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
-	# Start building models for the data
-	n <- nrow(Gender.Roles.Data)
-	# model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-	model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-	model2 <- update(model1, . ~ . + TESEX)
-	# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
-	model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	# model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-	# Use same method as in lab 5 to plot them
-	# change the model number in the predict functions below for different models
-	male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
-	female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
-	df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
-	model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
-	geom_line() + 
-	geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey") 
-	print(model3_plot)
+    # Start building models for the data
+    n <- nrow(Gender.Roles.Data)
+    # model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+    model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+    model2 <- update(model1, . ~ . + TESEX)
+    # model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
+    model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    # Use same method as in lab 5 to plot them
+    # change the model number in the predict functions below for different models
+    male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
+    female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
+    df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
+    model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey") 
+    print(model3_plot)
 }
 ```
 

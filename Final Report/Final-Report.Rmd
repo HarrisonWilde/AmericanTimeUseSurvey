@@ -80,6 +80,6 @@ Similar to above, potentially unchanged or uninteresting.
 
 # Limitations of the Data
 
-15 years is a short period.
+15 years is a short period. Sporadic subset size due to the number of filters required to get down to the demographics we actually want to investigate. 
 
 # References
