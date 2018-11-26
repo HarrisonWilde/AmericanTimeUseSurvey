@@ -23,26 +23,45 @@ The [Bureau of Labor Statistics website](https://www.bls.gov/tus/charts.htm) pro
 
 Fill in.
 
+Talk about how we plotted for Train and Validate data for all of the models. Split data roughly in half to look at every other month, isolating our assigned month into the validation set. Then we will plot full models in next section.
+
 # Dan's Stuff
+
+
 
 # Gender Roles
 
+Intro stuff, describe 
 Chris and Harry doing in separate doc for now.
 
-## Women
+It was decided to model and plot male and female time spent independently as this is more intuitive and accessible to a reader than just the difference. Justification of not just plotting difference.
 
-### Housework
+## Housework
 
-### Childcare
+Do the four
 
-### Food Preparation
+## Childcare
 
-## Men
 
-### Working Hours
 
-### House Maintenance
+## Food Preparation
 
-### Vehicle Maintenance
+
+
+## Working Hours
+
+
+
+## House Maintenance
+
+Quote a low participation rate, but could have potentially remained unchanged / more balanced to begin with?? Depends on if it is or not.
+
+## Vehicle Maintenance
+
+Similar to above, potentially unchanged or uninteresting.
+
+# Limitations of the Data
+
+15 years is a short period.
 
 # References
