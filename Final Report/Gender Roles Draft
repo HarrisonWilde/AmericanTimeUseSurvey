@@ -1,0 +1,34 @@
+---
+title: "Final Report Draft"
+author: "CK"
+date: "24/11/2018"
+output: pdf_document
+fontsize: 11pt
+classoption: twocolumn
+header-includes:
+- \setlength{\columnsep}{25pt}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+```
+
+## Gender Roles
+
+A major news topic in recent years has been the division between genders in terms of roles and responsibilities. This debate has been fueled by a new wave of feminism, as well as a number of different campaigns, including *'#MeToo'* and *'Times Up'*. Both of these movements aim at addressing commonplace sexual harassment and discrimination and empowering women to take control. Given this backdrop, it was decided that an interesting area of the ATUS data to focus on would be the change in time use for different genders. Specifically, areas of time use where pre-existing gender roles are present were examined. 
+
+Talcott Parsons' **[input BibTex reference here]** view of gender roles, developed in the 1950s, compared traditional gender roles with more liberal alternatives. A simplified version of the strictly traditional view of gender roles is detailed below. 
+
+**Make this more formal**
+```{r, echo=FALSE}
+Male.Activities <- c("Working", "House Maintenance", "Vehicle Maintenance")
+Female.Activities <- c("Housework", "Cooking", "Childcare")
+kable(data.frame(Male.Activities, Female.Activities), format = 'latex', table.env = 'table*', col.names = c("Male Activites", "Female Activities"), align = rep('c', 2)) 
+```
+
+The liberal viewpoint discussed by Parsons suggests an equal balance of time for the genders in these roles. Whilst this study was developed over 50 years ago, a preliminary look at the data confirmed that, in 2003, a complete transition to the liberal viewpoint had not occurred. Therefore, it was decided to investigate whether the time use of these specific activities was heading to an equal split between the genders or whether it is stationary. Of course, it should be noted that 15 years is not a huge length of time to measure this sort of social change, as only a few sets of generations responses are recorded, however, it presents an interesting topic. 
+
+For each of the 6 activities defined above, a general linear model or a linear model were produced and plotted below. 
+
+For the generation classifications, we need to reference http://www.pewresearch.org/fact-tank/2018/03/01/millennials-overtake-baby-boomers/
