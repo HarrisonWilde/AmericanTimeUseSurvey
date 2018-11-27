@@ -157,7 +157,7 @@ For both of these variables, it was decided that the participation rate was too 
 
 ### Housework
 
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=12, fig.align='c'}
+```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=10, fig.align='c'}
 model1 <- glm(weighted.Housework ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
 	model2 <- update(model1, . ~ . + TESEX)
 	# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
@@ -180,7 +180,7 @@ The graphs above show that for all generations, except for *Millenials*, there h
 
 ### Cooking
 
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=12, fig.align='c'}
+```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=10, fig.align='c'}
 model1 <- glm(weighted.Food.Preparation ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
 	model2 <- update(model1, . ~ . + TESEX)
 	# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
@@ -203,7 +203,7 @@ The graphs above show a very similar trend to houseworkin the sense that the gap
 
 ### Childcare
 
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=12, fig.align='c'}
+```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=10, fig.align='c'}
 model1 <- glm(weighted.Childcare ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
 	model2 <- update(model1, . ~ . + TESEX)
 	# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
