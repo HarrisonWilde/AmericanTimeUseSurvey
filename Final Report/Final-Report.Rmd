@@ -558,4 +558,17 @@ These graphs show perhaps the greatest change in gender roles. The data for *Bab
 
 15 years is a short period. Sporadic subset size due to the number of filters required to get down to the demographics we actually want to investigate.
 
+The code below is to check the distribution of age group in those 15 years. It would not be a problem if there is a participant who have joined the survey several times, as her/his data would be regarded as independent samples in different years.
+```{r}
+library(dplyr)
+require(ggplot2)
+library(dplyr)
+age <- select(Dataset, TUYEAR, TEAGE,TESEX)
+age$TUYEAR <- as.factor(age$TUYEAR)
+p <- ggplot(data = age , aes(x=TUYEAR, y=TEAGE,fill=TESEX)) + geom_boxplot(width=0.8)
+p + ggtitle('Boxplot of ages of participants from 2003 to 2017') + xlab('Year') + ylab('Age')
+```
+
+It is clear that the amount of participants is not well distributed and should be considered into the analysis. However, it could lead to the birth rate and death rate of the country.
+
 # References
