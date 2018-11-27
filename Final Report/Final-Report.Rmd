@@ -202,6 +202,7 @@ model1 <- glm(weighted.Food.Preparation ~ ns(TUDIARYDATE), data = Gender.Roles.D
 The graphs above show a very similar trend to houseworkin the sense that the gap is decreasing and that all generations, apart from *Millenials* spend a similar amount of time in general on this activity. However, the difference with this activity is that for *Baby Boomers* and *Generation X*, women are actually spending more time on this activity than they were previously - the decrease in the gap is as a result of a sharper increase for men. For *Millenails*, this is not true: both sexes are spending more time on this activity but the increase for both is at an equal rate and so the gap is remaining equal. The *Silent Generation* is the generation showing the biggest decrease in the gap between sexes; this is due to the decrease for women and an increase for men, although this generation started off with the highest values for both sexes. 
 
 ### Childcare
+Again for similar reasons to working, the *Silent Generation* have been excluded from this. Most are unlikely to have any household children 
 
 ```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=10, fig.align='c'}
 model1 <- glm(weighted.Childcare ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
@@ -216,7 +217,7 @@ model1 <- glm(weighted.Childcare ~ ns(TUDIARYDATE), data = Gender.Roles.Data, fa
 	male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
 	female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
 	df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
-	model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
+	model3_plot <- ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) + 
 	geom_line() + 
 	geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = "Predicted Childcare (minutes)", title = "Trends in childcare for each generation", subtitle = "Data Source: ATUS Survey") + scale_colour_discrete(name="Sex")
 	print(model3_plot)
