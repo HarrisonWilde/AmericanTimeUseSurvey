@@ -560,6 +560,9 @@ These graphs show perhaps the greatest change in gender roles. The data for *Bab
 
 The code below is to check the distribution of age group in those 15 years. It would not be a problem if there is a participant who have joined the survey several times, as her/his data would be regarded as independent samples in different years.
 ```{r}
+#save Dan's tidy dataset as another dataset, so no need to run the code every time opening r studio.
+write.csv(Data_minus_rows,'Dataset.csv')      
+Dataset <- import('Dataset.csv')
 library(dplyr)
 require(ggplot2)
 library(dplyr)
