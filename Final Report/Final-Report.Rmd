@@ -111,7 +111,7 @@ Talcott Parsons' **[input BibTex reference here]** view of gender roles, develop
 ```{r, echo=FALSE}
 Male.Activities <- c("Working", "House Maintenance", "Vehicle Maintenance")
 Female.Activities <- c("Housework", "Cooking", "Childcare")
-kable(data.frame(Male.Activities, Female.Activities), col.names = c("Male Activites", "Female Activities"), align = rep('c', 2)) %>% kable_styling(full_width = T) 
+kable(data.frame(Male.Activities, Female.Activities), caption  = "Traditionalist Gender Actitivies", format = "latex", booktabs = T,  col.names = c("Male Activites", "Female Activities"), align = rep('c', 2)) %>% kable_styling(full_width = T, latex_options = "HOLD_position")
 ```
 
 The liberal viewpoint discussed by Parsons suggests an equal balance of time for the genders in these roles. Whilst this study was developed over 50 years ago, a preliminary look at the data confirmed that, in 2003, a complete transition to the liberal viewpoint had not occurred. Therefore, it was decided to investigate whether the time use of these specific activities was heading to an equal split between the genders or whether it is stationary. Of course, it should be noted that 15 years is not a huge length of time to measure this sort of social change, as only a few sets of generations responses are recorded, however, it presents an interesting topic. 
@@ -121,7 +121,7 @@ Following, some initial exploration of the data, it was also decided that lookin
 ```{r, echo=FALSE}
 Generations <- c("Silent Generation", "Baby Boomers", "Generation X", "Millenials")
 Birth.Years <- c("1928 - 1945", "1946 - 1964", "1965 - 1980", "1981 - 1996")
-kable(data.frame(Generations,Birth.Years), col.names = c("Generation", "Birth Years"), align = rep('c', 2)) 
+kable(data.frame(Generations,Birth.Years),format = "latex", caption = "Generations", booktabs = T, col.names = c("Generation", "Birth Years"), align = rep('c', 2)) %>% kable_styling(full_width = T)
 ```
 
 For each of the activities, a suitable generalized linear model was developed using sex, year and generation as parameters. The values used to predict each model were constructed using the weighted mean formula provided in the *ATUS User's Guide*, available online in the ATUS Survey Documentation. Splines were added to the model for each year and graphical representations were produced. 
@@ -132,8 +132,8 @@ For each of the activities, a suitable generalized linear model was developed us
 
 The plots below show the change in working patterns between the four different generations. 
 
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=6}
-model1 <- glm(weighted.Working ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=3, fig.width=5}
+model1 <- lm(weighted.Working ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
 	model2 <- update(model1, . ~ . + TESEX)
 	# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
 	model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
@@ -142,8 +142,8 @@ model1 <- glm(weighted.Working ~ ns(TUDIARYDATE), data = Gender.Roles.Data, fami
 	# model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
 	# Use same method as in lab 5 to plot them
 	# change the model number in the predict functions below for different models
-	male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
-	female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
+	male.prediction <- predict(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
+	female.prediction <- predict(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
 	df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
 	model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
 	geom_line() + 
@@ -157,7 +157,7 @@ For both of these variables, it was decided that the participation rate was too 
 
 ### Housework
 
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=6}
+```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=3, fig.width=5}
 model1 <- glm(weighted.Housework ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
 	model2 <- update(model1, . ~ . + TESEX)
 	# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
@@ -180,7 +180,7 @@ The graphs above show that for all generations, except for *Millenials*, there h
 
 ### Cooking
 
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=6}
+```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=3, fig.width=5}
 model1 <- glm(weighted.Food.Preparation ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
 	model2 <- update(model1, . ~ . + TESEX)
 	# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
@@ -203,7 +203,7 @@ The graphs above show a very similar trend to houseworkin the sense that the gap
 
 ### Childcare
 
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=6}
+```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=3, fig.width=5}
 model1 <- glm(weighted.Childcare ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
 	model2 <- update(model1, . ~ . + TESEX)
 	# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
