@@ -64,41 +64,46 @@ Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 2] <- "F"
 ```
 
 ```{r, cache=TRUE}
-weighted.valuesM <- c()
-weighted.valuesF <- c()
-Gender.Roles.Differences <- data.frame('Year' = c(), 'Month' = c(), 'Variable' = c(), 'Generation' = c(), 'Region' = c(), 'Difference' = c())
+# weighted.valuesM <- c()
+# weighted.valuesF <- c()
+Gender.Roles.Differences <- data.frame('Year' = c(), 'Month' = c(), 'Variable' = c(), 'Generation' = c(), 'Difference' = c())
 
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
     Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
-    for(generation in c("Silent Generation", "Baby Boomers", "Generation X", "Millenials")) {
-        for (region in 1:4) {
-            for (year in unique(Gender.Roles.Data$TUYEAR)) {
-                for (month in unique(Gender.Roles.Data$TUMONTH)) {
-                    for (sex in c("M", "F")) {
+    for (generation in c("Silent Generation", "Baby Boomers", "Generation X", "Millenials")) {
+        for (year in unique(Gender.Roles.Data$TUYEAR)) {
+            for (month in unique(Gender.Roles.Data$TUMONTH)) {
+                for (sex in c("M", "F")) {
 
-                        Filtered.Data <- filter(Gender.Roles.Data, TESEX == sex, TUYEAR == year, TUMONTH == month, GEREG == region, TUGENERATION == generation)
-                        bottom.sum <- sum(Filtered.Data$TUFNWGTP)
-                        top.sum <- sum(Filtered.Data$TUFNWGTP * Filtered.Data[,variable])
-                        weighted.values <- top.sum / bottom.sum
-            
+                    Filtered.Data <- filter(Gender.Roles.Data, TESEX == sex, TUYEAR == year, TUMONTH == month, TUGENERATION == generation)
+                    bottom.sum <- sum(Filtered.Data$TUFNWGTP)
+                    top.sum <- sum(Filtered.Data$TUFNWGTP * Filtered.Data[,variable])
+                    weighted.values <- top.sum / bottom.sum
+
+                    if (sex == 'M') m.weighted.values <- weighted.values
+
+                    for (region in 1:4) {
+
+                        Filtered.Regional.Data <- filter(Filtered.Data, GEREG == region)
+                        bottom.sum <- sum(Filtered.Regional.Data$TUFNWGTP)
+                        top.sum <- sum(Filtered.Regional.Data$TUFNWGTP * Filtered.Regional.Data[,variable])
+                        weighted.regional.values <- top.sum / bottom.sum
+
                         Gender.Roles.Data[Gender.Roles.Data$TESEX == sex & Gender.Roles.Data$TUYEAR == year & Gender.Roles.Data$TUMONTH == month & Gender.Roles.Data$GEREG == region & Gender.Roles.Data$TUGENERATION == generation, paste0('weighted.', variable)] <- weighted.values
-
-                        if (Filtered.Data$TESEX[1] == "F") {
-                            weighted.difference <- Gender.Roles.Data[Gender.Roles.Data$TESEX == 'M' & Gender.Roles.Data$TUYEAR == year & Gender.Roles.Data$TUMONTH == month & Gender.Roles.Data$GEREG == region & Gender.Roles.Data$TUGENERATION == generation, paste0('weighted.', variable)] - weighted.values
-                        }
                     }
-                    Gender.Roles.Differences <- rbind(Gender.Roles.Differences, data.frame('Year' = year, 'Month' = month, 'Variable' = variable, 'Generation' = generation, 'Region' = region, 'Difference' = weighted.difference))
                 }
+                weighted.difference <- m.weighted.values - weighted.values
+                Gender.Roles.Differences <- rbind(Gender.Roles.Differences, data.frame('Year' = year, 'Month' = month, 'Variable' = variable, 'Generation' = generation, 'Difference' = unique(weighted.difference)))
             }
         }
     }
 }
-Difference <- abs(weighted.valuesM - weighted.valuesF)
+# Difference <- abs(weighted.valuesM - weighted.valuesF)
 ```
 
 ```{r, cache=TRUE}
-Gender.Differences <- data.frame(Year = rep(rep(2003:2017, each = 48), 4), Month = rep(rep(1:12, each = 4), 60), Region = rep(rep(1:4, each = 720), 4), Generation = rep(c("Silent Generation", "Baby Boomers", "Generation X", "Millenials"), 720))
-Gender.Differences <- data.frame(Gender.Differences, Difference[1:2880], Difference[2881:5760], Difference[5761:8640], Difference[8641:11520], Difference[11521:14400], Difference[14401:17280])
+# Gender.Differences <- data.frame(Year = rep(rep(2003:2017, each = 48), 4), Month = rep(rep(1:12, each = 4), 60), Region = rep(rep(1:4, each = 720), 4), Generation = rep(c("Silent Generation", "Baby Boomers", "Generation X", "Millenials"), 720))
+# Gender.Differences <- data.frame(Gender.Differences, Difference[1:2880], Difference[2881:5760], Difference[5761:8640], Difference[8641:11520], Difference[11521:14400], Difference[14401:17280])
 Gender.Roles.Train <- filter(Gender.Roles.Data, TUMONTH %% 2 == 0)
 Gender.Roles.Validate <- filter(Gender.Roles.Data, TUMONTH %% 2 != 0)
 ```
