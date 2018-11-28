@@ -216,7 +216,7 @@ It is immediately clear that the most compelling change out of the 17 activity g
 best_subsets <- regsubsets(part_tu04~TUYEAR + TESEX + PEEDUCA + PEHSPNON + PTDTRACE + TEAGE + TELFS + TRCHILDNUM + TRHOLIDAY + TRSPPRES, data = Data_minus_columns, nvmax = 3, force.in = c(1))
 ```
 
-When fitting a linear model, the method of best subsets, with Year forced in, tells us that the most significant variables to predict the proportion of American's spending time *Caring for & Helping Nonhousehold (NonHH) Members* is **Sex** and **Number of Household Children**. A linear model is not sufficient to accurately predict tu04 participation, however it does give a good idea as to what is causing the change of the period 2003-2017.
+When fitting a linear model, the method of best subsets, with Year forced in, gives that the most significant variables to predict the proportion of American's spending time *Caring for & Helping Nonhousehold (NonHH) Members* is **Sex** and **Number of Household Children**. A linear model is not sufficient to accurately predict tu04 participation, however it does give a good idea as to what is causing the change of the period 2003-2017.
 
 ```{r part_tu04 Summary Model, message=FALSE, echo=FALSE, warning=FALSE}
 n1 <- nrow(part_weighted_means_data)
@@ -354,7 +354,7 @@ part_tu04_sex_child_model <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(
 ```{r Testing the new model, eval=TRUE, echo=FALSE, message=FALSE}
 summary_for_t_test <- summary(part_tu04_sex_child_model)
 ```
-The key observation is that, as the table suggested, over the period the participation in caring for & helping non-household members has decreased for both men and women, and there appears to be a link between this and the number of household children. Updating the model to include the number of household children and then testing this hypothesis with a t-test confirms this is the case. Looking at the graph, fluctuations in the average number of household children, on the whole seem to be followed by but if we check the correlations between them, they show this link is fairly weak (0.65 for Men and 0.49 for Women), suggesting there must be further reasons for this change; possibly not measured in this dataset.
+The key observation is that, as the table suggested, over the period the participation in caring for & helping non-household members has decreased for both men and women, and there appears to be a link between this and the number of household children. Updating the model to include the number of household children and then testing this hypothesis with a t-test confirms this is the case. Looking at the graph, fluctuations in the average number of household children, on the whole seem to be followed by but after checking the correlations between them, they show this link is fairly weak (0.65 for Men and 0.49 for Women), suggesting there must be further reasons for this change; possibly not measured in this dataset.
 
 ## How The Time Spent on Traditionally Gendered Activities has Converged as Gender Roles have Broken Down
 
@@ -468,7 +468,7 @@ kable(data.frame(Generations,Birth.Years),format = "latex", caption = "Generatio
 
 For each of the activities, a suitable generalized linear model was developed using sex, year and generation as parameters. The values used to predict each model were constructed using the weighted mean formula provided in the *ATUS User's Guide*, available online in the ATUS Survey Documentation. Splines were added to the model for each year and graphical representations were produced.
 
-**For the generation classifications, we need to reference** http://www.pewresearch.org/fact-tank/2018/03/01/millennials-overtake-baby-boomers/
+**For the generation classifications, it need to reference** http://www.pewresearch.org/fact-tank/2018/03/01/millennials-overtake-baby-boomers/
 
 ### Working
 
@@ -572,7 +572,7 @@ These graphs show perhaps the greatest change in gender roles. The data for *Bab
 
 # Limitations of the Data
 
-15 years is a short period. Sporadic subset size due to the number of filters required to get down to the demographics we actually want to investigate.
+15 years is a short period. Sporadic subset size due to the number of filters required to get down to the demographics is what actually need to investigate.
 
 The code below is to check the distribution of age group in those 15 years. It would not be a problem if there is a participant who have joined the survey several times, as her/his data would be regarded as independent samples in different years.
 ```{r, cache = TRUE}
