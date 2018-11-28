@@ -5,6 +5,9 @@ date: "23/11/2018"
 output:
   pdf_document: default
   html_document: default
+bibliography: Final-Report-References.bib
+csl: ieee.csl
+link-citations: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -16,6 +19,8 @@ library(zoo)
 library(dplyr)
 library(splines)
 ```
+
+The required datasets acquired through ATUS [@ATUS] are loaded in.
 
 ```{r, cache=TRUE}
 # Import ATUS Summary file
@@ -31,7 +36,7 @@ ATUS.SUM$TUBIRTHYEAR <- ATUS.SUM$TUYEAR - ATUS.SUM$TEAGE
 #Classify Generations
 ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation", 
     ifelse(ATUS.SUM$TUBIRTHYEAR < 1965, "Baby Boomers",
-        ifelse(ATUS.SUM$TUBIRTHYEAR < 1981, "Generation X", "Millenials")))
+        ifelse(ATUS.SUM$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
 ATUS.CPS.States <- select(ATUS.CPS, TUCASEID, GESTFIPS, GEDIV, GEREG)
 ATUS.CPS.States <- distinct(ATUS.CPS.States)
@@ -70,7 +75,7 @@ Gender.Roles.Differences <- data.frame('Year' = c(), 'Month' = c(), 'Variable' =
 
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
     Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
-    for (generation in c("Silent Generation", "Baby Boomers", "Generation X", "Millenials")) {
+    for (generation in c("Silent Generation", "Baby Boomers", "Generation X", "Millennials")) {
         for (year in unique(Gender.Roles.Data$TUYEAR)) {
             for (month in unique(Gender.Roles.Data$TUMONTH)) {
                 for (sex in c("M", "F")) {
@@ -102,10 +107,11 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
 ```
 
 ```{r, cache=TRUE}
-# Gender.Differences <- data.frame(Year = rep(rep(2003:2017, each = 48), 4), Month = rep(rep(1:12, each = 4), 60), Region = rep(rep(1:4, each = 720), 4), Generation = rep(c("Silent Generation", "Baby Boomers", "Generation X", "Millenials"), 720))
+# Gender.Differences <- data.frame(Year = rep(rep(2003:2017, each = 48), 4), Month = rep(rep(1:12, each = 4), 60), Region = rep(rep(1:4, each = 720), 4), Generation = rep(c("Silent Generation", "Baby Boomers", "Generation X", "Millennials"), 720))
 # Gender.Differences <- data.frame(Gender.Differences, Difference[1:2880], Difference[2881:5760], Difference[5761:8640], Difference[8641:11520], Difference[11521:14400], Difference[14401:17280])
 Gender.Roles.Train <- filter(Gender.Roles.Data, TUMONTH %% 2 == 0)
 Gender.Roles.Validate <- filter(Gender.Roles.Data, TUMONTH %% 2 != 0)
+Gender.Rols.Plot <- filter(Gender.Roles.Data)
 ```
 
 ```{r, cache=TRUE}
@@ -176,7 +182,7 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
     print(model3_plot)
 }
 ```
-Do on entire dataset
+Do on entire dataset minus July
 
 ```{r, cache=TRUE}
 # Make a variable for all years. 

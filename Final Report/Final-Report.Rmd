@@ -84,7 +84,7 @@ if (!require("openintro")){
 if (!require("broom")){
   install.packages("broom")
   library("broom")
-} # To tidy and foritify the data into a dataframe for map use (https://www.rdocumentation.org/packages/broom/versions/0.5.0)
+} # To tidy and fortify the data into a dataframe for map use (https://www.rdocumentation.org/packages/broom/versions/0.5.0)
 if (!require("rgeos")){
   install.packages("rgeos")
   library("rgeos")

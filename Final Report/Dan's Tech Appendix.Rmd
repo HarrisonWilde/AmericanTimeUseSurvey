@@ -90,23 +90,23 @@ The data used for the analyis is imported and tidied.
 
 Import the datasets required from the ATUS [@ATUS] corpus of data. Summary and CPS files are used primarily.
 
-```{r Import Data, echo=FALSE, message=FALSE}
-ATUS_dataset <- import("atussum_0317.csv", setclass = "tibble")    # import raw summary data as TIBBLE
+```{r Import Data, echo=FALSE, message=FALSE, cache=TRUE}
+ATUS.SUM <- import("atussum_0317.csv", setclass = "tibble")    # import raw summary data as TIBBLE
 ATUS.CPS <- import('atuscps_0317.csv', setclass = "tibble") # import CPS data as TIBBLE for geographical data use
 ```
 
-```{r Tidying the Data, echo=FALSE, message=FALSE}
+```{r Tidying the Data, echo=FALSE, message=FALSE, cache=TRUE}
 # Check there are no other NA's other than those in format explained in the notes
-NA_check <- sum(is.na(ATUS_dataset))
+NA_check <- sum(is.na(ATUS.SUM))
 
 # Add date from respondent file and change Sex values to M and F instead of 1 and 2
-ATUS_dataset <- mutate(ATUS_dataset, TESEX = ifelse(TESEX == 1, "M", "F"))
+ATUS.SUM <- mutate(ATUS.SUM, TESEX = ifelse(TESEX == 1, "M", "F"))
 # Create a diary date column based off of the unique ID
-ATUS_dataset$TUDIARYDATE <- as.Date(paste0(substr(ATUS_dataset$TUCASEID, 1, 6), '01'), "%Y%m%d")
+ATUS.SUM$TUDIARYDATE <- as.Date(paste0(substr(ATUS.SUM$TUCASEID, 1, 6), '01'), "%Y%m%d")
 
 
 # A change of variable name in this period leads to missing values so we merge these 2 variables
-ATUS_dataset <- mutate(ATUS_dataset, Met_Status = as.factor(pmax(GEMETSTA, GTMETSTA)))
+ATUS_dataset <- mutate(ATUS.SUM, Met_Status = as.factor(pmax(GEMETSTA, GTMETSTA)))
 ATUS_dataset <- select(ATUS_dataset, -one_of(c("GEMETSTA", "GTMETSTA")))
 
 # Set suitable variables as factors
@@ -160,7 +160,7 @@ Data_minus_columns <- select(Data_minus_columns, -one_of("TEHRUSLT"))
 
 The weighed means for each year are calculated for the 17 activity groups, both in minuted and % participation
 
-```{r Weighted Means, echo=FALSE, message=FALSE}
+```{r Weighted Means, echo=FALSE, message=FALSE, cache=TRUE}
 # group the data by Year
 Data_minus_columns_year_grouped <- Data_minus_columns %>% group_by(TUYEAR)
 
@@ -184,24 +184,24 @@ for (i in c(10:16, 18)){
 
 An overall summary of the actvity groups is created by the code below. It shows we need to look deeper to find interesting changes.
 
-```{r Initial Summary Data, echo=FALSE, message=FALSE}
+```{r Initial Summary Data, echo=FALSE, message=FALSE, cache=TRUE}
 melted_participation_data <- melt(select(part_weighted_means_data, "TUYEAR", grep("^part_tu", names(part_weighted_means_data))), id.vars="TUYEAR")
 melted_data <- melt(select(weighted_means_data, "TUYEAR", grep("^tu", names(weighted_means_data))), id.vars="TUYEAR")
 ```
 
-```{r Initial Summary Plots, echo=FALSE, message=FALSE}
+```{r Initial Summary Plots, echo=FALSE, message=FALSE, cache=TRUE}
 part_summary_plot <- ggplot(melted_participation_data, aes(x=TUYEAR, y=value, color = variable)) + geom_smooth(se=FALSE)
 summary_plot <- ggplot(melted_data, aes(x=TUYEAR, y=value, color=variable)) + geom_smooth(se=FALSE)
 ```
 
-```{r Printing Summary Plots, eval=FALSE, echo=FALSE, message=FALSE}
+```{r Printing Summary Plots, eval=FALSE, echo=FALSE, message=FALSE, cache=TRUE}
 print(part_summary_plot)
 print(summary_plot)
 ```
 
 To get an better idea of which variables changed the most over the period, tables containing the percentage change from 2003 to 2017 and the variance over the period is created.
 
-```{r Weighted Means Variance and Percentage Change, echo=FALSE}
+```{r Weighted Means Variance and Percentage Change, echo=FALSE, cache=TRUE}
 variance <- sapply(weighted_means_data, function(col) var(col))
 percentage_change <- (weighted_means_data[15,]/weighted_means_data[1,] - 1)*100
 Activity_year_measures <- bind_rows(variance, percentage_change)
@@ -213,7 +213,7 @@ part_Activity_year_measures <- bind_rows(part_variance, part_percentage_change)
 part_Activity_year_measures <- bind_cols(as_tibble(data.frame(Measure = c("Variance", "% Change"))), select(part_Activity_year_measures, -TUYEAR))
 ```
 
-```{r Weighted Means Variance and Percentage Change Table, echo=FALSE}
+```{r Weighted Means Variance and Percentage Change Table, echo=FALSE, cache=TRUE}
 kable_names <- "Measure"
 for (i in 1:9){
   kable_names <- c(kable_names, paste0("tu0", i))
@@ -231,13 +231,13 @@ kable_styling(part_tu03_kable, full_width = T, latex_options = c("striped", "hol
 
 Best subsets regression on a linear model is performed to estimate which variables have the largest effect on tu04 paticipation %.
 
-```{r Best Subsets, include=FALSE}
+```{r Best Subsets, include=FALSE, cache=TRUE}
 best_subsets <- regsubsets(part_tu04~TUYEAR + TESEX + PEEDUCA + PEHSPNON + PTDTRACE + TEAGE + TELFS + TRCHILDNUM + TRHOLIDAY + TRSPPRES, data = Data_minus_columns, nvmax = 3, force.in = c(1))
 ```
 
 A summary spline curve glm model with log link and multiplicative errors is fitted to show the change in tu04 over the period.
 
-```{r part_tu04 Summary Model, message=FALSE, echo=FALSE, warning=FALSE}
+```{r part_tu04 Summary Model, message=FALSE, echo=FALSE, warning=FALSE, cache=TRUE}
 n1 <- nrow(part_weighted_means_data)
 part_tu04_summary_model <- glm(part_tu04 ~ ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_weighted_means_data,
                           family = quasi(link = "log", variance = "mu^2"),
@@ -255,13 +255,13 @@ part_tu04_summary_plot <- ggplot(part_weighted_means_data, aes(x=TUYEAR, y=part_
   geom_ribbon(data = part_tu04_summary_predicted, aes(y=fitted, ymin=ymin, ymax=ymax), alpha=0.1)
 ```
 
-```{r part_tu04 Summary Plot, message=FALSE, eval=FALSE, echo=FALSE}
+```{r part_tu04 Summary Plot, message=FALSE, eval=FALSE, echo=FALSE, cache=TRUE}
 print(part_tu04_summary_plot)
 ```
 
 Best subsets showed that sex and number of household children have the largest effect on tu04 participation %. Therefore tu04 participation % is first broken down by sex. Therefore new weighted means are calculated.
 
-```{r Sex Weighted Means, echo=FALSE, message=FALSE}
+```{r Sex Weighted Means, echo=FALSE, message=FALSE, cache=TRUE}
 Data_minus_columns_year_sex_grouped <- Data_minus_columns %>% group_by(TUYEAR, TESEX)
 
 sex_weighted_means_data <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
@@ -283,7 +283,7 @@ for (i in c(10:16, 18)){
 
 A new model is built to take account of this split.
 
-```{r part_tu04 Sex Model, message=FALSE, echo=FALSE, warning=FALSE}
+```{r part_tu04 Sex Model, message=FALSE, echo=FALSE, warning=FALSE, cache=TRUE}
 n2 <- nrow(part_sex_weighted_means_data)
 part_tu04_sex_model <- glm(part_tu04 ~ -1 + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data,
                           family = quasi(link = "log", variance = "mu^2"),
@@ -301,13 +301,13 @@ part_tu04_sex_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYEAR, y=part_
 ```
 
 
-```{r part_tu04 Sex Plot, message=FALSE, eval=FALSE, echo=FALSE}
+```{r part_tu04 Sex Plot, message=FALSE, eval=FALSE, echo=FALSE, cache=TRUE}
 print(part_tu04_sex_plot) # print of the new model's plot
 ```
 
 Weighted means for the number of household children for each group of people and year are calculated in order to see the change over the period.  A bar chart of these weighted mean number of household children is added to plot.
 
-```{r TRCHILDNUM Weighted Means, message=FALSE, echo=FALSE, warning=FALSE}
+```{r TRCHILDNUM Weighted Means, message=FALSE, echo=FALSE, warning=FALSE, cache=TRUE}
 sex_weighted_means_TRCHILDNUM <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
 for (i in 1:9){
   sex_weighted_means_TRCHILDNUM <- full_join(sex_weighted_means_TRCHILDNUM, summarise_at(Data_minus_columns_year_sex_grouped, vars(TRCHILDNUM), funs(weighted.mean(., TUFNWGTP))))
@@ -336,7 +336,7 @@ part_tu04_sex_TRCHILDNUM_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYE
 
 The suitability of the model is checked using an F test. It shows that is a significant improvement over the original model.
 
-```{r Suitability of the model, echo=FALSE}
+```{r Suitability of the model, echo=FALSE, cache=TRUE}
 part_tu04_summary_model_anova <- glm(part_tu04 ~ ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data, family = quasi(link = "log", variance = "mu^2"),
                               mustart = rep(5, n2))
 ANOVA_for_sex <- anova(part_tu04_summary_model_anova, part_tu04_sex_model, test="F")
@@ -344,13 +344,13 @@ ANOVA_for_sex <- anova(part_tu04_summary_model_anova, part_tu04_sex_model, test=
 
 The final plot is printed.
 
-```{r part_tu04 Sex Plot with Number of Children, message=FALSE, echo=FALSE, fig.height=4}
+```{r part_tu04 Sex Plot with Number of Children, message=FALSE, echo=FALSE, fig.height=4, cache=TRUE}
 print(part_tu04_sex_TRCHILDNUM_plot)
 ```
 
 The conclusion from the EDA in regards to the participation % for tu04 is informally tested by creating a simpler linear model which when tested shows that the coefficient for Year is < 0 and therefore confirms the belief.
 
-```{r Linear model for the plot, eval=TRUE, echo=FALSE, message=FALSE}
+```{r Linear model for the plot, eval=TRUE, echo=FALSE, message=FALSE, cache=TRUE}
 part_tu04_sex_linear_model <- lm(data=part_sex_weighted_means_data, part_tu04~TUYEAR + TESEX)
 part_tu04_sex_linear_model_summary <- summary(part_tu04_sex_linear_model)
 Year_t <- coefficients(part_tu04_sex_linear_model_summary)[2,3]
@@ -359,7 +359,7 @@ lm_p_value <- pt(Year_t, part_tu04_sex_linear_model$df, lower=TRUE)
 
 In order to check there is a link between the number of household children a new model must be produced which includes this as an explanatory variable. The code below builds this model
 
-```{r Adding TRCHILDNUM to model, echo=FALSE, message=FALSE}
+```{r Adding TRCHILDNUM to model, echo=FALSE, message=FALSE, cache=TRUE}
 #note we have only 1439 respondents with TRCHILDNUM>4 so we set these to 4 so that the algorithm converges.
 Data_minus_columns_year_sex_child_grouped <- Data_minus_columns
 Data_minus_columns_year_sex_child_grouped <- mutate(Data_minus_columns_year_sex_child_grouped, TRCHILDNUM = ifelse(TRCHILDNUM >4, 4, TRCHILDNUM)) %>% group_by(TUYEAR, TESEX, TRCHILDNUM)
@@ -388,7 +388,7 @@ part_tu04_sex_child_model <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(
 
 A t test confirms that this variable is significant, implying there is a dependence.
 
-```{r Testing the new model, eval=TRUE, echo=FALSE, message=FALSE}
+```{r Testing the new model, eval=TRUE, echo=FALSE, message=FALSE, cache=TRUE}
 sex_child_summary_for_t_test <- summary(part_tu04_sex_child_model)
 sex_child_p_value <- coefficients(sex_child_summary_for_t_test)[1,4]
 ```
@@ -399,7 +399,7 @@ In order to make formal conclusions based on the EDA we must hypotheses test the
 
 The same tidying procedure is completed on the validation data.
 
-```{r Validation Data Tidying, echo=FALSE, message=FALSE}
+```{r Validation Data Tidying, echo=FALSE, message=FALSE, cache=TRUE}
 #remove full time vs part time as has -1
 Data_minus_columns_validation <- select(ATUS_validation_data, -one_of("TRDPFTPT"))
 #remove full time vs part time spouse as has -1
@@ -420,7 +420,7 @@ Data_minus_columns_validation <- select(Data_minus_columns_validation, -one_of("
 
 Again, weighted means are calculated for men and women, for each year.
 
-```{r Sex Weighted Means Validation, echo=FALSE, message=FALSE}
+```{r Sex Weighted Means Validation, echo=FALSE, message=FALSE, cache=TRUE}
 Data_minus_columns_year_sex_grouped_validation <- Data_minus_columns_validation %>% group_by(TUYEAR, TESEX)
 
 sex_weighted_means_data_validation <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
@@ -442,7 +442,7 @@ for (i in c(10:16, 18)){
 
 A linear model is fitted to the validation data and now a formal t test is completed. It confirms the proportion of American's who participate in caring for & helping non-household members has decreased over the period.
 
-```{r Linear model for the plot Validation, eval=TRUE, echo=FALSE, message=FALSE}
+```{r Linear model for the plot Validation, eval=TRUE, echo=FALSE, message=FALSE, cache=TRUE}
 part_tu04_sex_linear_model_validation <- lm(data=part_sex_weighted_means_data_validation, part_tu04~TUYEAR + TESEX)
 part_tu04_sex_linear_model_summary_validation <- summary(part_tu04_sex_linear_model_validation)
 Year_t_validation <- coefficients(part_tu04_sex_linear_model_summary_validation)[2,3]
@@ -451,7 +451,7 @@ lm_p_value_validation <- pt(Year_t_validation, part_tu04_sex_linear_model_valida
 
 Like with the EDA, a spline curve model is fitted.
 
-```{r part_tu04 Sex Model Validation, message=FALSE, echo=FALSE, warning=FALSE}
+```{r part_tu04 Sex Model Validation, message=FALSE, echo=FALSE, warning=FALSE, cache=TRUE}
 n2_validation <- nrow(part_sex_weighted_means_data_validation)
 part_tu04_sex_model_validation <- glm(part_tu04 ~ -1 + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data_validation,
                           family = quasi(link = "log", variance = "mu^2"),
@@ -470,7 +470,7 @@ part_tu04_sex_plot_validation <- ggplot(part_sex_weighted_means_data_validation,
 
 Again, to check if the link between number of household children and tu04 participation % is significant it must be tested using an update of the model which includes the number of household children as an explanatory variable.
 
-```{r Adding TRCHILDNUM to model Validation, echo=FALSE, message=FALSE}
+```{r Adding TRCHILDNUM to model Validation, echo=FALSE, message=FALSE, cache=TRUE}
 Data_minus_columns_year_sex_child_grouped_validation <- Data_minus_columns_validation
 Data_minus_columns_year_sex_child_grouped_validation <- mutate(Data_minus_columns_year_sex_child_grouped_validation, TRCHILDNUM = ifelse(TRCHILDNUM >4, 4, TRCHILDNUM)) %>% group_by(TUYEAR, TESEX, TRCHILDNUM)
 
@@ -498,12 +498,12 @@ part_tu04_sex_child_model_validation <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX 
 
 The t-test is completed on the model
 
-```{r Testing the new model Validation, eval=TRUE, echo=FALSE, message=FALSE, fig.height=4}
+```{r Testing the new model Validation, eval=TRUE, echo=FALSE, message=FALSE, fig.height=4, cache=TRUE}
 sex_child_summary_for_t_test_validation <- summary(part_tu04_sex_child_model_validation)
 sex_child_p_value_validation <- coefficients(sex_child_summary_for_t_test_validation)[1,4]
 ```
 
-```{r Plotting Data Tidying, echo=FALSE, message=FALSE}
+```{r Plotting Data Tidying, echo=FALSE, message=FALSE, cache=TRUE}
 #remove full time vs part time as has -1
 Data_minus_columns_plotting <- select(ATUS_plotting_data, -one_of("TRDPFTPT"))
 #remove full time vs part time spouse as has -1
@@ -522,7 +522,7 @@ Data_minus_columns_plotting <- select(Data_minus_columns_plotting, -one_of("TRER
 Data_minus_columns_plotting <- select(Data_minus_columns_plotting, -one_of("TEHRUSLT"))
 ```
 
-```{r Sex Weighted Means Plotting, echo=FALSE, message=FALSE}
+```{r Sex Weighted Means Plotting, echo=FALSE, message=FALSE, cache=TRUE}
 Data_minus_columns_year_sex_grouped_plotting <- Data_minus_columns_plotting %>% group_by(TUYEAR, TESEX)
 
 sex_weighted_means_data_plotting <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
@@ -542,7 +542,7 @@ for (i in c(10:16, 18)){
 }
 ```
 
-```{r part_tu04 Sex Model Plotting, message=FALSE, echo=FALSE, warning=FALSE}
+```{r part_tu04 Sex Model Plotting, message=FALSE, echo=FALSE, warning=FALSE, cache=TRUE}
 n2_plotting <- nrow(part_sex_weighted_means_data_plotting)
 part_tu04_sex_model_plotting <- glm(part_tu04 ~ -1 + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data_plotting,
                           family = quasi(link = "log", variance = "mu^2"),
@@ -555,7 +555,7 @@ part_tu04_sex_predicted_plotting <-bind_cols(part_tu04_sex_model_data_plotting,
                                                                     ymax = exp(part_tu04_sex_predicted_plotting$fit+1.128*part_tu04_sex_predicted_plotting$se.fit))))
 ```
 
-```{r TRCHILDNUM Weighted Means Plotting, message=FALSE, echo=FALSE, warning=FALSE}
+```{r TRCHILDNUM Weighted Means Plotting, message=FALSE, echo=FALSE, warning=FALSE, cache=TRUE}
 sex_weighted_means_TRCHILDNUM_plotting <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
 for (i in 1:9){
   sex_weighted_means_TRCHILDNUM_plotting <- full_join(sex_weighted_means_TRCHILDNUM_plotting, summarise_at(Data_minus_columns_year_sex_grouped_plotting, vars(TRCHILDNUM), funs(weighted.mean(., TUFNWGTP))))
@@ -582,7 +582,7 @@ part_tu04_sex_TRCHILDNUM_plot_plotting <- ggplot(part_sex_weighted_means_data_pl
   scale_x_continuous(breaks = seq(2003,2017,2)) + xlab("Year") + ylab("Average number of children") + labs(color="Sex", fill="Sex") + theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 ```
 
-```{r part_tu04 Sex Plot with Number of Children Plotting, message=FALSE, echo=FALSE}
+```{r part_tu04 Sex Plot with Number of Children Plotting, message=FALSE, echo=FALSE, cache=TRUE}
 print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 ```
 
@@ -599,10 +599,10 @@ Apply some reformatting to the data imported previously to better fit the explor
 
 ```{r, cache=TRUE}
 # Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
-ATUS_dataset$TUBIRTHYEAR <- ATUS_dataset$TUYEAR - ATUS_dataset$TEAGE
-ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation", 
-    ifelse(ATUS_dataset$TUBIRTHYEAR < 1965, "Baby Boomers",
-        ifelse(ATUS_dataset$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
+ATUS.SUM$TUBIRTHYEAR <- ATUS.SUM$TUYEAR - ATUS.SUM$TEAGE
+ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation", 
+    ifelse(ATUS.SUM$TUBIRTHYEAR < 1965, "Baby Boomers",
+        ifelse(ATUS.SUM$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
 
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
 ATUS.CPS.States <- select(ATUS.CPS, TUCASEID, GESTFIPS, GEDIV, GEREG)
@@ -613,15 +613,15 @@ Next, collections of variable representing traditional gender roles can be extra
 
 ```{r, cache=TRUE}
 # Create a data frame from relevant variables within ATUS Summary
-Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
+Gender.Roles.Data <- select(ATUS.SUM, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
 
 # Create variables to be added to a data frame with relevant gender activities 
-Working <- ATUS_dataset[, grep("^t05", names(ATUS_dataset))]
-House.Maintenance <- ATUS_dataset[, grep("^t0204", names(ATUS_dataset))]
-Vehicle.Maintenance <- ATUS_dataset[, grep("^t0207", names(ATUS_dataset))]
-Housework <- ATUS_dataset[, grep("^t0201", names(ATUS_dataset))]
-Food.Preparation <- ATUS_dataset[, grep("^t0202", names(ATUS_dataset))] + ATUS_dataset$t070101 + ATUS_dataset$t070103
-Childcare <- ATUS_dataset[, grep("^t03", names(ATUS_dataset))]
+Working <- ATUS.SUM[, grep("^t05", names(ATUS.SUM))]
+House.Maintenance <- ATUS.SUM[, grep("^t0204", names(ATUS.SUM))]
+Vehicle.Maintenance <- ATUS.SUM[, grep("^t0207", names(ATUS.SUM))]
+Housework <- ATUS.SUM[, grep("^t0201", names(ATUS.SUM))]
+Food.Preparation <- ATUS.SUM[, grep("^t0202", names(ATUS.SUM))] + ATUS.SUM$t070101 + ATUS.SUM$t070103
+Childcare <- ATUS.SUM[, grep("^t03", names(ATUS.SUM))]
 
 # Add in relevant categories
 Gender.Roles.Data$Working <- rowSums(Working)
@@ -673,8 +673,6 @@ Split the full dataset into `Train`, `Validate` and `Plotting` subsets, where `T
 ```{r, cache=TRUE}
 Gender.Roles.Train <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 == 0)
 Gender.Roles.Validate <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 != 0)
-Gender.Roles.Train
-Gender.Roles.Validate
 Gender.Roles.Plotting <- filter(Gender.Roles.Data, month(TUDIARYDATE) != 7)
 ```
 
@@ -724,7 +722,7 @@ fit.models.and.plot <- function(Data, variable, mu) {
 
 Generate plots for EDA to observe potential long-term trends over time for each of the chosen variables to investigate. `mu` values were experimented with once the data was first observe to roughly fall within the range of plotted values for each model.
 
-```{r, cache = TRUE}
+```{r, cache=TRUE}
 fit.models.and.plot(Gender.Roles.Train, 'Working', 250)
 fit.models.and.plot(Gender.Roles.Train, 'House.Maintenance', 10)
 fit.models.and.plot(Gender.Roles.Train, 'Vehicle.Maintenance', 10)
@@ -761,7 +759,7 @@ fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
 
 Rename to something to do with map or region
 
-```{r}
+```{r, cache=TRUE}
 region.weighted.differences <- function(Data) {
     Gender.Roles.Differences <- data.frame('Year' = c(), 'Variable' = c(), 'Generation' = c(), 'Difference' = c())
     for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
@@ -791,8 +789,8 @@ Gender.Roles.Differences.Region.Plotting <- region.weighted.differences(Gender.R
 
 Code for running $t$-tests
 
-```{r}`
-Gender.Roles.Differences.Validate <- filter(Gender.Roles.Differences, month(TUDIARYDATE) %% 2 != 0)
+```{r, cache=TRUE}
+Gender.Roles.Differences.Validate <- filter(Gender.Roles.Differences, Month %% 2 != 0)
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
     filter(Gender.Roles.Differences, 'Variable' == variable)
     model <- lm(data=Gender.Roles.Differences.Validate, Difference ~ Year)
