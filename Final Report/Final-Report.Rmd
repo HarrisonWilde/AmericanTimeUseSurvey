@@ -563,34 +563,27 @@ print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 ## How The Time Spent on Traditionally Gendered Activities has Converged as Gender Roles have Broken Down
 
 ```{r, cache=TRUE, include=FALSE}
-# Import ATUS Summary file
-ATUS.SUM <- import('atussum_0317.csv', setclass = "tibble")
-# Import ATUS CPS File
-ATUS.CPS <- import('atuscps_0317.csv', setclass = "tibble")
-# Create a diary date column
-ATUS.SUM$TUDIARYDATE <- as.Date(paste0(substr(ATUS.SUM$TUCASEID, 1, 6), '01'), "%Y%m%d")
-# Add months as a column as a derivative of the TUCASEID variable
-ATUS.SUM$TUMONTH <- as.numeric(substr(ATUS.SUM$TUCASEID, 5, 6))
-# Get birth year as a variable for purpose of classifying generation
-ATUS.SUM$TUBIRTHYEAR <- ATUS.SUM$TUYEAR - ATUS.SUM$TEAGE
-#Classify Generations
-ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation",
-    ifelse(ATUS.SUM$TUBIRTHYEAR < 1965, "Baby Boomers",
-        ifelse(ATUS.SUM$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
+# Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
+ATUS_dataset$TUBIRTHYEAR <- ATUS_dataset$TUYEAR - ATUS_dataset$TEAGE
+ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation", 
+    ifelse(ATUS_dataset$TUBIRTHYEAR < 1965, "Baby Boomers",
+        ifelse(ATUS_dataset$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
+
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
 ATUS.CPS.States <- select(ATUS.CPS, TUCASEID, GESTFIPS, GEDIV, GEREG)
 ATUS.CPS.States <- distinct(ATUS.CPS.States)
-# Create variables to be added to a data frame with relevant gender activities
-Working <- ATUS.SUM[, grep("^t05", names(ATUS.SUM))]
-House.Maintenance <- ATUS.SUM[, grep("^t0204", names(ATUS.SUM))]
-Vehicle.Maintenance <- ATUS.SUM[, grep("^t0207", names(ATUS.SUM))]
-Housework <- ATUS.SUM[, grep("^t0201", names(ATUS.SUM))]
-Food.Preparation <- ATUS.SUM[, grep("^t0202", names(ATUS.SUM))] + ATUS.SUM$t070101 + ATUS.SUM$t070103
-Childcare <- ATUS.SUM[, grep("^t03", names(ATUS.SUM))]
+
 # Create a data frame from relevant variables within ATUS Summary
-# Childnum there for future use
-Gender.Roles.Data <- select(ATUS.SUM, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TRCHILDNUM, TUMONTH, TUDIARYDATE, TUGENERATION)
-# Join this dataset with the CPS states info by unique id number of participant
+Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
+
+# Create variables to be added to a data frame with relevant gender activities 
+Working <- ATUS_dataset[, grep("^t05", names(ATUS_dataset))]
+House.Maintenance <- ATUS_dataset[, grep("^t0204", names(ATUS_dataset))]
+Vehicle.Maintenance <- ATUS_dataset[, grep("^t0207", names(ATUS_dataset))]
+Housework <- ATUS_dataset[, grep("^t0201", names(ATUS_dataset))]
+Food.Preparation <- ATUS_dataset[, grep("^t0202", names(ATUS_dataset))] + ATUS_dataset$t070101 + ATUS_dataset$t070103
+Childcare <- ATUS_dataset[, grep("^t03", names(ATUS_dataset))]
+
 # Add in relevant categories
 Gender.Roles.Data$Working <- rowSums(Working)
 Gender.Roles.Data$House.Maintenance <- rowSums(House.Maintenance)
@@ -598,11 +591,9 @@ Gender.Roles.Data$Vehicle.Maintenance <- rowSums(Vehicle.Maintenance)
 Gender.Roles.Data$Housework <- rowSums(Housework)
 Gender.Roles.Data$Food.Preparation <- rowSums(Food.Preparation)
 Gender.Roles.Data$Childcare <- rowSums(select(Childcare, t030101:t030399))
+
 # Join this dataset with the CPS states info by unique id number of participant
 Gender.Roles.Data <- inner_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASEID')
-Gender.Roles.Data <- filter(Gender.Roles.Data)
-Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 1] <- "M"
-Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 2] <- "F"
 
 Gender.Roles.Differences <- data.frame('Year' = c(), 'Month' = c(), 'Variable' = c(), 'Generation' = c(), 'Difference' = c())
 
@@ -610,10 +601,10 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
     Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
     for (generation in c("Silent Generation", "Baby Boomers", "Generation X", "Millennials")) {
         for (year in unique(Gender.Roles.Data$TUYEAR)) {
-            for (month in unique(Gender.Roles.Data$TUMONTH)) {
+            for (month in unique(month(Gender.Roles.Data$TUDIARYDATE))) {
                 for (sex in c("M", "F")) {
 
-                    Filtered.Data <- filter(Gender.Roles.Data, TESEX == sex, TUYEAR == year, TUMONTH == month, TUGENERATION == generation)
+                    Filtered.Data <- filter(Gender.Roles.Data, TESEX == sex, TUYEAR == year, month(TUDIARYDATE) == month, TUGENERATION == generation)
                     bottom.sum <- sum(Filtered.Data$TUFNWGTP)
                     top.sum <- sum(Filtered.Data$TUFNWGTP * Filtered.Data[,variable])
                     weighted.values <- top.sum / bottom.sum
@@ -627,7 +618,7 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
                         top.sum <- sum(Filtered.Regional.Data$TUFNWGTP * Filtered.Regional.Data[,variable])
                         weighted.regional.values <- top.sum / bottom.sum
 
-                        Gender.Roles.Data[Gender.Roles.Data$TESEX == sex & Gender.Roles.Data$TUYEAR == year & Gender.Roles.Data$TUMONTH == month & Gender.Roles.Data$GEREG == region & Gender.Roles.Data$TUGENERATION == generation, paste0('weighted.', variable)] <- weighted.values
+                        Gender.Roles.Data[Gender.Roles.Data$TESEX == sex & Gender.Roles.Data$TUYEAR == year & month(Gender.Roles.Data$TUDIARYDATE)` & Gender.Roles.Data$GEREG == region & Gender.Roles.Data$TUGENERATION == generation, paste0('weighted.', variable)] <- weighted.values
                     }
                 }
                 weighted.difference <- m.weighted.values - weighted.values
@@ -667,7 +658,16 @@ For each of the activities, a suitable generalized linear model was developed us
 The plots below show the change in working patterns between three different generations. The *Silent Generation* have been excluded from this plot as, by 2010, the youngest of this generation will be 65. At this age, most will have retired and as such the plot is not very informative. Furthermore, the same scale is used for each graph (for purpose of easier comparison), so this affects the quality of comparison between the more informative generations.
 
 ```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=9, fig.align='c'}
+Dates = c()
+for (i in 4:17) {
+    if (i < 10) {
+        Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
+    } else {
+        Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
+    }
+}
 Gender.Roles.Plotting <- filter(Gender.Roles.Data, month(TUDIARYDATE) != 7)
+Gender.Roles.Train <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 == 0)
 fit.models.and.plot <- function(Data, variable, mu) {
     # Start building models for the data
     n <- nrow(Data)
@@ -697,7 +697,7 @@ fit.models.and.plot <- function(Data, variable, mu) {
         geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey"))
     }
 }
-fit.models.and.plot(Gender.Roles.Plotting, 'Working', 250)
+fit.models.and.plot(Gender.Roles.Train, 'Working', 250)
 ```
 
 ### House Maintenance and Vehicle Maintenance
@@ -728,7 +728,7 @@ Again for similar reasons to working, the *Silent Generation* have been excluded
 fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
 ```
 
-These graphs show perhaps the greatest change in gender roles. The data for *Baby Boomers* and the *Silent Generation* shows very little, most likely as the variables included in childcare relate only to caring for household children, where a child is defined as someone below the age of 18. It is unlikely that many people within these generations would have children living with them at this age (in fact checking the data confirms that, in 2017, only 9% met this criteria). Furthermore at this age, their children are likely to be older and require less constant care as they become more independent. Therefore, the other generations, *Millennials* and *Generation X*, reflect more interesting trends. For reasons similar to the older generations, the drop off in childcare at the end of *Generation X* can likely be explained as children mature; however, the drop off for women is sharper than it is for men, leading to a convergence in the lines. The gap has decreased substantially, from 50 minutes per day in 2003 to less than half that, around 20 minutes in 2017. This could further be attributed to the decrease in working time for this generation, noted above. The *Millennials* on the other hand relfect an increase year on year for childcaring activities. Whilst the gap increases slightly over time, it doesn't ever reach a similar point to that of *Generation X*, with the biggest difference being around 40% compared to that of 60%.
+These graphs show perhaps the greatest change in gender roles. The data for *Baby Boomers* and the *Silent Generation* shows very little, most likely as the variables included in childcare relate only to caring for household children, where a child is defined as someone below the age of 18. It is unlikely that many people within these generations would have children living with them at this age (in fact checking the data confirms that, in 2017, only 9% met this criteria). Furthermore at this age, their children are likely to be older and require less constant care as they become more independent. Therefore, the other generations, *Millennials* and *Generation X*, reflect more interesting trends. For reasons similar to the older generations, the drop off in childcare at the end of *Generation X* can likely be explained as children mature; however, the drop off for women is sharper than it is for men, leading to a convergence in the lines. The gap has decreased substantially, from 50 minutes per day in 2003 to less than half that, around 20 minutes in 2017. This could further be attributed to the decrease in working time for this generation, noted above. The *Millennials* on the other hand reflect an increase year on year for activities in childcare. Whilst the gap increases slightly over time, it doesn't ever reach a similar point to that of *Generation X*, with the biggest difference being around 40% compared to that of 60%.
 
 # Conclusions
 
@@ -736,6 +736,7 @@ Summarise all of our conclusions here.
 
 # Limitations of the Data
 
+One of the major limitations imposed on this research is the length of the period within which the data was gathered.
 15 years is a short period. Sporadic subset size due to the number of filters required to get down to the demographics is what actually need to investigate.
 
 The code below is to check the distribution of age group in those 15 years. It would not be a problem if there is a participant who have joined the survey several times, as her/his data would be regarded as independent samples in different years.
