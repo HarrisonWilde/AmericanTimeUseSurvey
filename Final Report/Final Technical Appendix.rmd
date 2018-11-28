@@ -570,7 +570,7 @@ part_tu04_sex_TRCHILDNUM_plot_plotting <- ggplot(part_sex_weighted_means_data_pl
   scale_x_continuous(breaks = seq(2003,2017,2)) + xlab("Year") + ylab("Average number of children") + labs(color="Sex", fill="Sex") + theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 ```
 
-```{r part_tu04 Sex Plot with Number of Children Plotting, message=FALSE, echo=TRUE}
+```{r part_tu04 Sex Plot with Number of Children Plotting, message=FALSE, echo=TRUE, cache=TRUE}
 print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 ```
 
@@ -684,6 +684,7 @@ fit.models.and.plot <- function(Data, variable, mu) {
     male.prediction <- predict.glm(model4, newdata = filter(Data, TESEX == 'M'), se = TRUE, type = "response")
     female.prediction <- predict.glm(model4, newdata = filter(Data, TESEX == 'F'), se = TRUE, type = "response")
     df <- data.frame(age = c(filter(Data, TESEX == 'M')$TEAGE, filter(Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Data, TESEX == 'M')$TUDIARYDATE, filter(Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Data, TESEX == 'M')$TESEX, filter(Data, TESEX == 'F')$TESEX), region = c(filter(Data, TESEX == 'M')$GEREG, filter(Data, TESEX == 'F')$GEREG), generation = c(filter(Data, TESEX == "M")$TUGENERATION, filter(Data, TESEX == "F")$TUGENERATION))
+    df <- transform(df, generation = factor(generation, levels = c("Millennials", "Generation X", "Baby Boomers", "Silent Generation")))
     if (variable == 'Working' | variable == 'Childcare') {
         print(ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) +
         geom_line() +

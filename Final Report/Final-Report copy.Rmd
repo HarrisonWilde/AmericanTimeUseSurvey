@@ -95,8 +95,6 @@ if (!require("rgeos")){
 
 ## Exploratory Data Analysis
 
-In order to effectively discover trends in the data whilst still being able to validate these trends, the data was split as mentioned before by taking alternate months and assigning them to training and validation data sets respectively. The even months were used throughout the EDA in this part of the report as well as the EDA in the [later part](#howthetimespentontraditionallygenderedactivitieshasconvergedasgenderroleshavebrokendown).
-
 ```{r Import Data, echo=FALSE, message=FALSE}
 ATUS.SUM <- import("atussum_0317.csv", setclass = "tibble")    # import raw summary data as TIBBLE
 ATUS.CPS <- import('atuscps_0317.csv', setclass = "tibble") # import CPS data as TIBBLE for geographical data use
@@ -190,7 +188,7 @@ print(part_summary_plot)
 print(summary_plot)
 ```
 
-The ATUS dataset records time spent on activities in minutes. When all 17 variables are plotted it appears that there is more variation in the proportion of American's partaking in activities than there is in the raw time use values. Therefore, the EDA in this section initially focussed on looking at how the proportion of American's partaking in the 17 categories of activities has changed. The following table gives a summary of some of these changes. The activities included are those with a percentage change of over 10% and a variance greater than 0.5, i.e those which are deemed to be of interest for further analysis and exploration.
+The ATUS dataset records time spent on activities in minutes. When we plot all 17 variables it appears that there is more variation in the proportion of American's partaking in activities than there is in time spent in minutes.Therefore, the initial concern of the EDA is to look at how the proportion of American's partaking in the 17 categories of activities has changed. The following table gives a summary of some of these changes. The activities included are those with a percentage change of over 10% and a variance greater than 0.5, i.e those which are deemed to be of interest for further analysis and exploration.
 
 ```{r Weighted Means Variance and Percentage Change, echo=FALSE}
 variance <- sapply(weighted_means_data, function(col) var(col))
@@ -309,11 +307,6 @@ part_tu04_sex_TRCHILDNUM_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYE
   scale_x_continuous(breaks = seq(2003,2017,2)) + xlab("Year") + ylab("Average number of children") + labs(color="Sex", fill="Sex") + theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 ```
 
-```{r Suitability of the model, echo=FALSE}
-part_tu04_summary_model_anova <- glm(part_tu04 ~ ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(5, n2))
-ANOVA_for_sex <- anova(part_tu04_summary_model_anova, part_tu04_sex_model, test="F")
-```
-
 The non-negative, non-linear nature of the continuous activity data also means a more complex model would be suitable. An $F$-test shows such a complex model which incorporates *Sex* is a significant improvement over such a model which doesn't include it. This confirms the belief that is has a significant effect on participation in caring for & helping non-household members.
 
 The plot below is a graphical interpretation of the model, built on the training data, with the average number of household children, for each group of the population, displayed as **bars**. Participation percentage in caring for & helping non-household members is displayed as smooth lines.
@@ -405,7 +398,7 @@ Year_t_validation <- coefficients(part_tu04_sex_linear_model_summary_validation)
 lm_p_value_validation <- pt(Year_t_validation, part_tu04_sex_linear_model_validation$df, lower=TRUE)
 ```
 
-As in the EDA, but this time formally, a linear model is built using *Sex* and *Year* and a $t$-test performed. It gives a $p$-value $< 0.05$ (quite a bit less in fact). This means there is sufficient evidence to conclude that the proportion of American's who participate in caring for & helping non-household members has in fact decreased over the period 2003-2017 as suggested by the EDA.
+As with EDA, but this time formally, a linear model is built using *Sex* and *Year* and a $t$-test performed. It gives $a$ p-value $<< 0.05$. This means there is sufficient evidence to conclude that the proportion of American's who participate in caring for & helping non-household members has infact decreased over the period 2003-2017 as suggested by the EDA.
 
 ```{r part_tu04 Sex Model Validation, message=FALSE, echo=FALSE, warning=FALSE}
 n2_validation <- nrow(part_sex_weighted_means_data_validation)
@@ -454,7 +447,7 @@ sex_child_summary_for_t_test_validation <- summary(part_tu04_sex_child_model_val
 sex_child_p_value_validation <- coefficients(sex_child_summary_for_t_test_validation)[1,4]
 ```
 
-With a $p$-value $< 0.05$, this test confirms this belief in the validation data.
+With a $p$-value $<< 0.05$, this test confirms this belief in the validation data.
 
 ```{r Plotting Data Tidying, echo=FALSE, message=FALSE}
 #remove full time vs part time as has -1
@@ -539,7 +532,7 @@ print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 
 # How The Time Spent on Traditionally Gendered Activities has Converged as Gender Roles have Broken Down
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, echo=FALSE}
 # Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
 ATUS.SUM$TUBIRTHYEAR <- ATUS.SUM$TUYEAR - ATUS.SUM$TEAGE
 ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation",
@@ -634,46 +627,41 @@ The discussion surrounding social division between genders in terms of roles and
 
 ## Exploratory Data Analysis
 
-Talcott Parsons' [@10.2307/2085686] study on gender roles - published in the 1950's - compared traditional gender roles with more liberal alternatives. A simplified version of this strictly traditional view of gender roles is detailed in the table below.
+Talcott Parsons' [@10.2307/2085686] study on gender roles - published in the 1950s - compared traditional gender roles with more liberal alternatives. A simplified version of the strictly traditional view of gender roles is detailed in the table below.
 
 ```{r, echo=FALSE}
 Male.Activities <- c("Working", "House Maintenance", "Vehicle Maintenance")
-Female.Activities <- c("Housework", "Food Preparation", "Childcare")
-kable(data.frame(Male.Activities, Female.Activities), caption  = "Traditionally Perceived Gender Activities", format = "latex", booktabs = T,  col.names = c("Male Activites", "Female Activities"), align = c('l', 'r')) %>% kable_styling(latex_options = "HOLD_position")
+Female.Activities <- c("Housework", "Cooking", "Childcare")
+kable(data.frame(Male.Activities, Female.Activities), caption  = "Traditionalist Gender Actitivies", format = "latex", booktabs = T,  col.names = c("Male Activites", "Female Activities"), align = c('l', 'r')) %>% kable_styling(full_width = T, latex_options = "HOLD_position")
 ```
 
 The liberal viewpoint discussed by Parsons suggests an equal balance of time for the genders in these roles. Whilst this study was developed over 50 years ago, a preliminary look at the data confirmed that, in 2003, a complete transition to the liberal viewpoint had not occurred. Therefore, it was decided to investigate whether the time use of these specific activities was converging to equality or remaining stationary with noticeable differences between genders.
 
-Following some initial exploration of the data and breaking down the respondents into different generations [@generations], another layer of complexity to the analysis was developed. Splitting the data by age allowed for further hypotheses regarding progression through convergence of time use for both genders in the areas discussed above; it would perhaps be assumed that younger people would be more progressive in this respect. Using this generational approach provided a way of tracking a population over time without having to arbitrarily pick age categories. A small number of participants fell outside of these ranges, however, these represented only a small number of participants and so were added to the next nearest generation (e.g. if a participant was born in 1998, they would be added to the *Millennials* generation).
+Following some initial exploration of the data and breaking down the respondents into different generations [@generations], another layer of complexity to the analysis was developed. Splitting the data by age allowed for further hypotheses regarding progression in converging time use by both genders in the areas discussed above; it would perhaps be assumed that younger people would be more progressive in this respect. Using this generational approach provided a way of tracking a population over time without having to arbitrarily pick age categories. A small number of participants fell outside of these ranges, however, these represented only a small number of participants and so were added to the next nearest generation (e.g. if a participant was born in 1998, they would be added to the *Millennials* generation).
 
 ```{r, echo=FALSE}
 Generations <- c("Silent Generation", "Baby Boomers", "Generation X", "Millennials")
 Birth.Years <- c("1928 - 1945", "1946 - 1964", "1965 - 1980", "1981 - 1996")
-kable(data.frame(Generations,Birth.Years),format = "latex", caption = "Generations", booktabs = T, col.names = c("Generation", "Birth Years"), align = c('l', 'r'))
+kable(data.frame(Generations,Birth.Years),format = "latex", caption = "Generations", booktabs = T, col.names = c("Generation", "Birth Years"), align = c('l', 'r')) %>% kable_styling(full_width = T)
 ```
 
-For each of the activities, a suitable generalized linear model was developed using *Sex*, *Year* and *Generation* as parameters. The values used to predict each model were constructed using the weighted mean formula provided in the **ATUS User's Guide**, available online in the ATUS Survey Documentation. Splines were added to the model for each year and graphical representations were produced. These graphical representations allowed for hypotheses to be formulated regarding the change in time use for these gender-stereotyped variables over the period. It was from these hypotheses that validation could then be carried out to see if the conclusions were consistent and thus whether the trend was likely to have substance behind it.
-
-It was decided to plot a line for each of the genders despite the interest of the analysis being focussed on the difference *between* the genders. This is because having lines to associate with each gender is likely more clear to the reader and can more intuitively show any narrowing of the gap between genders for the variables of interest.
-
-As far as the hypotheses there are to validate, they can be summarised similarly for each variable: as first posed in the aforementioned 1950's study, it is likely that social changes will lead to an erosion of gender roles. The EDA suggested that this erosion has continued from 2003 to 2017 and so validation is required to attempt to confirm that the difference in time use for the relevant variables has indeed decreased as time has continued.
+For each of the activities, a suitable generalized linear model was developed using sex, year and generation as parameters. The values used to predict each model were constructed using the weighted mean formula provided in the *ATUS User's Guide*, available online in the ATUS Survey Documentation. Splines were added to the model for each year and graphical representations were produced.
 
 ## Validation
 
-In order to validate the trends found in the EDA, the same approach to that taken in the first part of the report was followed: splitting the data set initially and using the unseen half to validate the observations and hypotheses made above. The validation data was then put through the same models used in the EDA and the hypotheses validated observationally. In addition to this more intuitive technique of validation, statistical $t$-testing was carried out to ensure significance in the shrinking difference between the two genders for the variables of interest. The models below showcase the results of the analysis after validation was carried out, plotting all of the data with the exception of July as required in the specification of this report. Despite using 11 months of the data here, it is critical to reiterate that all of the EDA and validation was carried out on entirely separate 6 month subsets of each year to ensure validity of the conclusions and testing.
+In order to validate the trends found in the EDA, the dataset was initially split
 
 ### Working
 
-The plots below show the change in working patterns between three different generations. The *Silent Generation* have been excluded from this plot as - by 2010 - the youngest of this generation will be 65. At this age, most will have retired and as such the plot is not likely to be very informative. Furthermore, the same scale is used for each graph (for ease of comparison), so including the *Silent Generation* would adversely affect the quality of comparison between the more informative generations.
+The plots below show the change in working patterns between three different generations. The *Silent Generation* have been excluded from this plot as, by 2010, the youngest of this generation will be 65. At this age, most will have retired and as such the plot is not very informative. Furthermore, the same scale is used for each graph (for purpose of easier comparison), so this affects the quality of comparison between the more informative generations.
 
 ```{r, echo=FALSE, warning=FALSE, fig.height=4, fig.width=9, fig.align='c'}
 fit.models.and.plot(Gender.Roles.Plotting, 'Working', 250)
 ```
-It can be seen that year on year there has been a slight contraction, especially visible in *Generation X* when the peak around 2016 is ignored. It is clear that generationally, working hours follow a fairly standard trajectory, peaking for people in their middle ages. *Millennials* have seen a steady increase in their time spent working as would be expected for people in that age range; the genders seem to have a much smaller gap between them when compared with *Generation X* though, which is testament to part of the hypothesis made above regarding progressive social norms propagating through younger generations.
 
 ### House Maintenance and Vehicle Maintenance
 
-For both of these variables, it was decided that the participation rate was too low to warrant deeper analysis. Whilst the EDA findings suggested that there existed a separation in gender, with men spending more time on both of these activities, the participation rates of around 3% for both reflected that these were more uncommon activities. As such, it was decided that there was not enough data to reflect the time spent in a suitable linear model; variance was much greater amongst the lower valued variables and these particular fluctuations did not seem to follow a clear long term trend.
+For both of these variables, it was decided that the participation rate was too low to warrant deeper analysis. Whilst the findings represented that there existed a separation in gender, with men spending more time on both of these activities, the participation rates of around 3% for both reflected that these were more uncommon activities. As such, it was decided that there was not enough data to reflect the time spent on these activities in a suitable linear model.
 
 ### Housework
 
@@ -681,19 +669,19 @@ For both of these variables, it was decided that the participation rate was too 
 fit.models.and.plot(Gender.Roles.Plotting, 'Housework', 50)
 ```
 
-The graphs above show that for all generations, except for *Millennials*, there has been a decrease in the gap in time spent on housework between men and women. This is as a result of men spending more time and women spending less time on housework, although the decrease for women is sharper than the increase for men. This trend is reflected clearly in *Generation X*, the second youngest generation. However, there is also strong evidence for this trend in the *Silent Generation* despite the slight divergence in 2016. On the other hand, the gap seems to have increased slightly for *Millennials* - both sexes are increasing the amount of time spent on housework, but the increase is not as great for men. Notably, *Millennials* also spend substantially less time doing housework than the other generations, with the highest point being around 45 minutes per day (women in 2016), compared to around 62 in *Baby Boomers* and *Generation X* and 72 minutes in the *Silent Generation*. Therefore, whilst the gap is increasing for *Millennials*, it is still smaller than all of the other generations at around 25 minutes. Comparatively, the *Silent Generation's* gap started at over 50 minutes in 2003 and has decreased to just under 45.
+The graphs above show that for all generations, except for *Millennials*, there has been a decrease in the gap between men and women. This is as a result of men spending more time and women spending less time on housework, although the decrease for women is sharper than the increase for men. This trend is reflected strongest in *Generation X*, the second youngest generation, however, there is also strong evidence for this trend in the *Silent Generation* despite the slight rise in women in 2016. On the other hand, the gap seems to have increased slightly for *Millennials* - both sexes are increasing the amount of time spent on housework, but the increase is not as severe for men. Notably, *Millennials* also spend substantially less time doing housework than the other generations, with the highest point being around 45 minutes per day (women in 2016), compared to around 62 in *Baby Boomers* and *Generation X* and 72 in the *Silent Generation*. Therefore, whilst the gap is increasing for *Millennials*, it is still smaller than all of the other generations at around 25 minutes. Comparatively, the *Silent Generation's* gap started at over 50 minutes in 2003 and has decreased to just under 45.
 
-### Food Preparation
+### Cooking
 
 ```{r, echo=FALSE, warning=FALSE, fig.height=4, fig.width=10, fig.align='c'}
 fit.models.and.plot(Gender.Roles.Plotting, 'Food.Preparation', 60)
 ```
 
-The graphs above show a very similar trend to `Housework` in the sense that the gap is decreasing and that all generations apart from *Millennials* spend a similar amount of time in general on this activity. However, the difference with this activity is that for *Baby Boomers* and *Generation X*, women are actually spending more time on this activity than they were previously - the decrease in the gap is as a result of a sharper increase for men perhaps as cooking and spending time at home is more normalised in society. For *Millennials*, the situation is slightly different: both sexes are spending more time on this activity but the increase for both is at an equal rate and so the gap is maintained. The *Silent Generation* is the generation showing the biggest decrease in the gap between sexes; this is due to the decrease for women and an increase for men, although this generation started off with the highest values for both sexes. This generation is likely to have more free time to begin with an thus exhibit more initial variance but then reflect the changes in society more clearly as cooking as an activity becomes more common amongst men.
+The graphs above show a very similar trend to `Housework` in the sense that the gap is decreasing and that all generations, apart from *Millennials* spend a similar amount of time in general on this activity. However, the difference with this activity is that for *Baby Boomers* and *Generation X*, women are actually spending more time on this activity than they were previously - the decrease in the gap is as a result of a sharper increase for men. For *Millennials*, this is not true: both sexes are spending more time on this activity but the increase for both is at an equal rate and so the gap is remaining equal. The *Silent Generation* is the generation showing the biggest decrease in the gap between sexes; this is due to the decrease for women and an increase for men, although this generation started off with the highest values for both sexes.
 
 ### Childcare
 
-For similar reasons to working, the *Silent Generation* has been excluded from this section as most of the people in this age range are unlikely to have any household children of their own.
+For similar reasons to working, the *Silent Generation* has been excluded from this section as most of the people in this age range are unlikely to have any household children.
 
 ```{r, echo=FALSE, warning=FALSE, fig.height=4, fig.width=10, fig.align='c'}
 fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
@@ -707,6 +695,18 @@ One of the major limitations imposed on this research is the length of the perio
 15 years is a short period. Sporadic subset size due to the number of filters required to get down to the demographics is what actually need to investigate.
 
 The code below is to check the distribution of age group in those 15 years. It would not be a problem if there is a participant who have joined the survey several times, as her/his data would be regarded as independent samples in different years.
+```{r}
+#save Dan's tidy dataset as another dataset, so no need to run the code every time opening r studio.
+write.csv(Data_minus_columns,'Dataset.csv')
+Dataset <- import('Dataset.csv')
+library(dplyr)
+require(ggplot2)
+library(dplyr)
+age <- select(Dataset, TUYEAR, TEAGE,TESEX)
+age$TUYEAR <- as.factor(age$TUYEAR)
+p <- ggplot(data = age , aes(x=TUYEAR, y=TEAGE,fill=TESEX)) + geom_boxplot(width=0.8)
+p + ggtitle('Boxplot of ages of participants from 2003 to 2017') + xlab('Year') + ylab('Age')
+```
 
 It is clear that the amount of participants is not well distributed and should be considered in the analysis. However, it could lead to the birth rate and death rate of the country.
 

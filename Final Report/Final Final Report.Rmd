@@ -539,7 +539,7 @@ print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 
 # How The Time Spent on Traditionally Gendered Activities has Converged as Gender Roles have Broken Down
 
-```{r, echo=FALSE, cache=TRUE}
+```{r, echo=FALSE}
 # Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
 ATUS.SUM$TUBIRTHYEAR <- ATUS.SUM$TUYEAR - ATUS.SUM$TEAGE
 ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation",
@@ -642,7 +642,7 @@ Female.Activities <- c("Housework", "Food Preparation", "Childcare")
 kable(data.frame(Male.Activities, Female.Activities), caption  = "Traditionally Perceived Gender Activities", format = "latex", booktabs = T,  col.names = c("Male Activites", "Female Activities"), align = c('l', 'r')) %>% kable_styling(latex_options = "HOLD_position")
 ```
 
-The liberal viewpoint discussed by Parsons suggests an equal balance of time for the genders in these roles. Whilst this study was developed over 50 years ago, a preliminary look at the data confirmed that, in 2003, a complete transition to the liberal viewpoint had not occurred. Therefore, it was decided to investigate whether the time use of these specific activities was converging to equality or remaining stationary with noticeable differences between genders.
+The liberal viewpoint discussed by Parsons suggests an equal balance of time for the genders in these roles. Whilst this study was developed over 50 years ago, a preliminary look at the data confirmed that, in 2003, a complete transition to the liberal viewpoint had not occurred. Therefore, it was decided to investigate whether the time use of these specific activities was converging to equality or remaining stationary with noticeable differences between genders. In order to do this as rigorously and objectively as possible, weighted averages were calculated amongst each demographic to best represent how different groups of peoples' time uses had changed over time and to make up for any inconsistencies in the data.
 
 Following some initial exploration of the data and breaking down the respondents into different generations [@generations], another layer of complexity to the analysis was developed. Splitting the data by age allowed for further hypotheses regarding progression through convergence of time use for both genders in the areas discussed above; it would perhaps be assumed that younger people would be more progressive in this respect. Using this generational approach provided a way of tracking a population over time without having to arbitrarily pick age categories. A small number of participants fell outside of these ranges, however, these represented only a small number of participants and so were added to the next nearest generation (e.g. if a participant was born in 1998, they would be added to the *Millennials* generation).
 
@@ -699,16 +699,15 @@ For similar reasons to working, the *Silent Generation* has been excluded from t
 fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
 ```
 
-These graphs show perhaps the greatest change in gender roles. The data for *Baby Boomers* and the *Silent Generation* shows very little, most likely as the variables included in childcare relate only to caring for household children, where a child is defined as someone below the age of 18. It is unlikely that many people within these generations would have children living with them at this age (in fact checking the data confirms that, in 2017, only 9% met this criteria). Furthermore at this age, their children are likely to be older and require less constant care as they become more independent. Therefore, the other generations, *Millennials* and *Generation X*, reflect more interesting trends. For reasons similar to the older generations, the drop off in childcare at the end of *Generation X* can likely be explained as children mature; however, the drop off for women is sharper than it is for men, leading to a convergence in the lines. The gap has decreased substantially, from 50 minutes per day in 2003 to less than half that, around 20 minutes in 2017. This could further be attributed to the decrease in working time for this generation, noted above. The *Millennials* on the other hand reflect an increase year on year for activities in childcare. Whilst the gap increases slightly over time, it doesn't ever reach a similar point to that of *Generation X*, with the biggest difference being around 40% compared to that of 60%.
+These graphs show perhaps the greatest change in gender roles. The data for *Baby Boomers* and the *Silent Generation* shows very little, most likely as the variables included in childcare relate only to caring for household children, where a child is defined as someone below the age of 18. It is unlikely that many people within these generations would have children living with them at this age (in fact checking the data confirms that, in 2017, only 9% met this criteria). Furthermore, at this age their children are likely to be older and require less constant care as they become more independent. Therefore, the other generations - *Millennials* and *Generation X* - exhibit more interesting trends. For reasons similar to the older generations, the drop off in childcare at the end of *Generation X* can likely be explained as children mature. However, it is important to note that the drop off for women is sharper than it is for men, leading to a convergence in the weighted means for both. The gap has decreased substantially, from 50 minutes per day in 2003 to less than half that, around 20 minutes in 2017. This could further be attributed to the decrease in working time for this generation, noted above. The *Millennials* on the other hand exhibit an increase year on year for activities in childcare. Whilst the gap increases slightly over time, it doesn't ever reach a similar point to that of *Generation X*, with the biggest difference being around 40% compared to 60%.
 
-# Limitations of the Data
+# Conclusions
 
-One of the major limitations imposed on this research is the length of the period within which the data was gathered.
-15 years is a short period. Sporadic subset size due to the number of filters required to get down to the demographics is what actually need to investigate.
+Will do tomorrow morning, someone else feel free to have a go.
 
-The code below is to check the distribution of age group in those 15 years. It would not be a problem if there is a participant who have joined the survey several times, as her/his data would be regarded as independent samples in different years.
+## Limitations of the Data
 
-It is clear that the amount of participants is not well distributed and should be considered in the analysis. However, it could lead to the birth rate and death rate of the country.
+One of the major limitations imposed on this research is the length of the period within which the data was gathered: 15 years is a short amount of time to observe trends amongst such a large population. This meant that often the data had to first be subsetted or transformed as no immediate trends were visible at the surface, this led to sporadic subset size (as mentioned with respect to *Vehicle* and *House Maintenance*) due to the number of filters required to get down to the demographics that were desirable to investigate.
 
 \parindent0pt
 
