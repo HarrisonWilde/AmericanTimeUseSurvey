@@ -557,6 +557,7 @@ part_tu04_sex_TRCHILDNUM_plot_plotting <- ggplot(part_sex_weighted_means_data_pl
   scale_y_continuous(sec.axis = sec_axis(~.*(1/0.1), name = "Spent any time at all caring for & \n helping nonhousehold members (%) \n")) +
   scale_x_continuous(breaks = seq(2003,2017,2)) + xlab("Year") + ylab("Average number of children") + labs(color="Sex", fill="Sex") + theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 ```
+We have now verified that the conlusions are correct: the percentage of American's who partake in caring for & helping nonhousehold members has decreased over the period from 2003 to 2017. There also seems to be a link between the number of children in the household and the participation percentage. 
 
 ```{r part_tu04 Sex Plot with Number of Children Plotting, message=FALSE, echo=FALSE}
 print(part_tu04_sex_TRCHILDNUM_plot_plotting)
@@ -567,7 +568,7 @@ print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 ```{r, cache=TRUE, include=FALSE}
 # Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
 ATUS_dataset$TUBIRTHYEAR <- ATUS_dataset$TUYEAR - ATUS_dataset$TEAGE
-ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation", 
+ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation",
     ifelse(ATUS_dataset$TUBIRTHYEAR < 1965, "Baby Boomers",
         ifelse(ATUS_dataset$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
 
@@ -578,7 +579,7 @@ ATUS.CPS.States <- distinct(ATUS.CPS.States)
 # Create a data frame from relevant variables within ATUS Summary
 Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
 
-# Create variables to be added to a data frame with relevant gender activities 
+# Create variables to be added to a data frame with relevant gender activities
 Working <- ATUS_dataset[, grep("^t05", names(ATUS_dataset))]
 House.Maintenance <- ATUS_dataset[, grep("^t0204", names(ATUS_dataset))]
 Vehicle.Maintenance <- ATUS_dataset[, grep("^t0207", names(ATUS_dataset))]
