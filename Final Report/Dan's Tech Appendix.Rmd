@@ -542,15 +542,14 @@ part_tu04_sex_TRCHILDNUM_plot_plotting <- ggplot(part_sex_weighted_means_data_pl
 print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 ```
 
-
-
+# How The Time Spent on Traditionally Gendered Activities has Converged as Gender Roles have Broken Down
 
 Apply some reformatting to the data imported previously to better fit the exploratory analysis to be carried out. This includes the creation of a `TUBIRTHYEAR` feature to be used in separating people into different generations (Millenials, Baby Boomers etc.) represented by another feature called `TUGENERATION`. The `ATUS.CPS` dataset is then filtered to select regional data which can be joined to the dataset created so far for EDA.
 
 ```{r, cache=TRUE}
 # Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
 ATUS_dataset$TUBIRTHYEAR <- ATUS_dataset$TUYEAR - ATUS_dataset$TEAGE
-ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation",
+ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation", 
     ifelse(ATUS_dataset$TUBIRTHYEAR < 1965, "Baby Boomers",
         ifelse(ATUS_dataset$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
 
@@ -565,7 +564,7 @@ Next, collections of variable representing traditional gender roles can be extra
 # Create a data frame from relevant variables within ATUS Summary
 Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
 
-# Create variables to be added to a data frame with relevant gender activities
+# Create variables to be added to a data frame with relevant gender activities 
 Working <- ATUS_dataset[, grep("^t05", names(ATUS_dataset))]
 House.Maintenance <- ATUS_dataset[, grep("^t0204", names(ATUS_dataset))]
 Vehicle.Maintenance <- ATUS_dataset[, grep("^t0207", names(ATUS_dataset))]
@@ -654,7 +653,7 @@ fit.models.and.plot <- function(Data, variable, mu) {
     model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
     # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
     # Use same method as in lab 5 to plot them
-
+    
     # change the model number in the predict functions below for different models
     male.prediction <- predict.glm(model5, newdata = filter(Data, TESEX == 'M'), se = TRUE, type = "response")
     female.prediction <- predict.glm(model5, newdata = filter(Data, TESEX == 'F'), se = TRUE, type = "response")
@@ -663,12 +662,12 @@ fit.models.and.plot <- function(Data, variable, mu) {
 
     # Don't want to include the Silent Generation for Working and Childcare as this generation's values are all very close to 0 which caused some issues; uninteresting
     if (variable == 'Working' | variable == 'Childcare') {
-        print(ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) +
-        geom_line() +
+        print(ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) + 
+        geom_line() + 
         geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey"))
     } else {
-        print(ggplot(df, aes(x=date, y=prediction, colour=type)) +
-        geom_line() +
+        print(ggplot(df, aes(x=date, y=prediction, colour=type)) + 
+        geom_line() + 
         geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey"))
     }
 }
