@@ -769,6 +769,13 @@ for (variable in c("Working", "Housework", "Food.Preparation", "Childcare")) {
 }
 ```
 
+The following plots show the low participation rate of Vehicle Maintenance and House Maintenance as noted in the report.  
+
+```{r}
+ggplot(Gender.Roles.Data, aes(x = TUYEAR, y = 100*(House.Maintenance > 0))) + geom_smooth() + labs(x = "Year", y = "Particpation Rate (%)", title = "Particpation rate of house maintenance", caption = "Data Source:ATUS Survey")
+ggplot(Gender.Roles.Data, aes(x = TUYEAR, y = 100*(Vehicle.Maintenance > 0))) + geom_smooth() + labs(x = "Year", y = "Particpation Rate (%)", title = "Particpation rate of vehicle maintenance", caption = "Data Source:ATUS Survey")
+```
+
 # Map Plot
 
 # References
