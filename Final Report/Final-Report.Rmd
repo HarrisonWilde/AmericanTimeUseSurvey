@@ -1,5 +1,5 @@
 ---
-title: "**How Americans’ Time Use Patterns Have Changed From 2003 to 2017**"
+title: "**How Americans' Time Use Patterns Have Changed From 2003 to 2017**"
 subtitle: "Group July"
 date: "26 November 2018"
 geometry: left=2cm, right=2cm, top=2cm, bottom=2cm
@@ -21,14 +21,14 @@ The aim of this report is to discover how Americans' time use patterns have chan
 
 The [Bureau of Labor Statistics website](https://www.bls.gov/tus/charts.htm) provides a number of charts looking at the 2017 annual averages for these categories. This report provides a more definitive conclusion on how time use patterns changed over the period, evidenced with statistical investigation of the data. The findings offer in-depth explanations as to where some of the biggest fluctuations are and suggests possible reasons for these fluctuations. Limitations to the analysis are noted where appropriate and these must be taken into account when performing any further analysis or summaries, and mentioned alongside any conclusions.
 
-Usually when analysing data, statisticians will split the dataset into training data and validation data. This ensures that any conclusions drawn from exploratory data analysis (EDA) on the training data can be verified using the remaining "unseen" validation data. The analysis performed for this report follows this technique, splitting the data approximately in half to provide continuity and robustness in model training. The split was done by selecting even and odd months for training and validation data respectively, in order to ensure that seasonality did not cause incorrect rejections of hypotheses posed based upon the EDA, as well as ensuring there were no uneven gaps in the data which may lead to a loss of clarity in plotting. This split also allowed for conformity to one of the project requirements that the month of July was to be excluded initially and used for validation. 
+Usually when analysing data, statisticians will split the dataset into training data and validation data. This ensures that any conclusions drawn from exploratory data analysis (EDA) on the training data can be verified using the remaining "unseen" validation data. The analysis performed for this report follows this technique, splitting the data approximately in half to provide continuity and robustness in model training. The split was done by selecting even and odd months for training and validation data respectively, in order to ensure that seasonality did not cause incorrect rejections of hypotheses posed based upon the EDA, as well as ensuring there were no uneven gaps in the data which may lead to a loss of clarity in plotting. This split also allowed for conformity to one of the project requirements that the month of July was to be excluded initially and used for validation.
 
 ```{r Notes, echo=FALSE, message=FALSE, cache=TRUE}
 # - Ages from 80-84 are rounded to 80 and those 85+ are rounded to 85
 # - In the data -1 means blank, -2 means don't know, -3 means refused
 ```
 
-```{r Load and, if necessary, install the package first, echo=FALSE, message=FALSE, cache=TRUE}
+```{r Load and, if necessary, install the package first, echo=FALSE, message=FALSE}
 if (!require("kableExtra")){
   install.packages("kableExtra")
   library("kableExtra")
@@ -188,7 +188,7 @@ print(part_summary_plot)
 print(summary_plot)
 ```
 
-The ATUS dataset records time spent on activities in minutes. The initial concern of the EDA is to look at how the proportion of American's partaking in the 17 categories of activities has changed. The following table gives a summary of some of these changes. The activities included are those with a percentage change of over 10% and a variance greater than 0.5, i.e those which are deemed to be of interest for further analysis and exploration.
+The ATUS dataset records time spent on activities in minutes. When we plot all 17 variables it appears that there is more variation in the proportion of American's partaking in activities than there is in time spent in minutes.Therefore, the initial concern of the EDA is to look at how the proportion of American's partaking in the 17 categories of activities has changed. The following table gives a summary of some of these changes. The activities included are those with a percentage change of over 10% and a variance greater than 0.5, i.e those which are deemed to be of interest for further analysis and exploration.
 
 ```{r Weighted Means Variance and Percentage Change, echo=FALSE, cache=TRUE}
 variance <- sapply(weighted_means_data, function(col) var(col))
@@ -217,13 +217,13 @@ part_tu03_kable <- kable(part_Activity_year_measures, caption = "Change in Parti
 kable_styling(part_tu03_kable, full_width = T, latex_options = c("hold_position"))
 ```
 
-It is immediately clear that the most compelling change out of the 17 activity groups over the period is in *Caring for & Helping Non-household (Non-HH) Members* represented by `tu04` in the data.
+It is immediately clear that the most compelling change out of the 17 activity groups, over the period, is in *Caring for & Helping Non-household (Non-HH) Members* represented by `tu04` in the data. However, without some further exploration, this is arguably uninteresting.
 
 ```{r Best Subsets, include=FALSE, cache=TRUE}
 best_subsets <- regsubsets(part_tu04~TUYEAR + TESEX + PEEDUCA + PEHSPNON + PTDTRACE + TEAGE + TELFS + TRCHILDNUM + TRHOLIDAY + TRSPPRES, data = Data_minus_columns, nvmax = 3, force.in = c(1))
 ```
 
-When fitting a linear model, the method of best subsets with *Year* forced in as a feature tells us that the most significant variables to predict the proportion of American's spending time *Caring for & Helping Nonhousehold (NonHH) Members* are *Sex* and *Number of Household Children*. A linear model is not sufficient to accurately predict `tu04` participation, however it does give a good idea as to what is causing the change over the period 2003 to 2017.
+When fitting a linear model, the method of best subsets with *Year* forced in as a variable tells us that the most significant variables to predict the proportion of American's spending time *Caring for & Helping Nonhousehold (NonHH) Members* are *Sex* and *Number of Household Children*. Ths model is not sufficient to accurately predict `tu04` participation, however it does give a good idea as to what is causing the change over the period 2003 to 2017.
 
 ```{r part_tu04 Summary Model, message=FALSE, echo=FALSE, warning=FALSE, cache=TRUE}
 n1 <- nrow(part_weighted_means_data)
@@ -312,9 +312,9 @@ part_tu04_sex_TRCHILDNUM_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYE
 ANOVA_for_sex <- anova(part_tu04_summary_model_anova, part_tu04_sex_model, test="F")
 ```
 
-The non-negative, non-linear nature of the continuous activity data allows for a suitable model using *Year* and *Sex* as explanatory variables to be fitted. The model used here is a natural cubic spline GLM with multiplicative errors and log link. An $F$-test shows this model is a significant improvement over the same model which does not use *Sex* as a variable, confirming the belief that is has a significant effect on participation in caring for & helping non-household members.
+The non-negative, non-linear nature of the continuous activity data also means a more complex model would be suitable. An $F$-test shows such a complex model which incorporates *Sex* is a significant improvement over such a model which doesn't include it. This confirms the belief that is has a significant effect on participation in caring for & helping non-household members.
 
-The plot below is a graphical interpretation of the model, built on the training data, with the average number of household children for each group of the population displayed as **bars**.
+The plot below is a graphical interpretation of the model, built on the training data, with the average number of household children, for each group of the population, displayed as **bars**. Participation percentage in caring for & helping non-household members is displayed as smooth lines.
 
 ```{r part_tu04 Sex Plot with Number of Children, message=FALSE, echo=FALSE, fig.height=4, cache=TRUE}
 print(part_tu04_sex_TRCHILDNUM_plot)
@@ -355,7 +355,7 @@ part_tu04_sex_child_model <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(
 sex_child_summary_for_t_test <- summary(part_tu04_sex_child_model)
 sex_child_p_value <- coefficients(sex_child_summary_for_t_test)[1,4]
 ```
-The key observation is that, as the table suggested, over the period the participation in caring for & helping non-household members has decreased for both men and women. Building a linear model using *Sex* and *Year* and performing a $t$-test confirms this. There also appears to be a link between participation in caring for & helping non-household members and the number of household children. Updating the spline curve model to include the number of household children and then again testing this hypothesis with a t-test confirms this is the case. Looking at the graph, fluctuations in the average number of household children, on the whole seem to be followed by but if we check the correlations between them, they show this link is fairly weak (0.65 for Men and 0.49 for Women), suggesting there must be further reasons for this change; possibly not measured in this dataset.
+The key observation is that, as the table suggested, over the period the participation in caring for & helping non-household members has decreased for both men and women. Building a linear model using *Sex* and *Year* and performing a $t$-test confirms this. There also appears to be a link between participation in caring for & helping non-household members and the number of household children. Updating the spline curve model to include the number of household children and then again testing this hypothesis with a t-test confirms this is also the case. Looking at the graph, fluctuations in the average number of household children, on the whole seem to be followed by but if we check the correlations between them, they show this link is fairly weak (0.65 for Men and 0.49 for Women), suggesting there must be further reasons for this change; possibly not measured in this dataset. Therefore, further analysis must be done before a statistically sound conclusion on the causation of the changes can be made.
 
 ## Validation
 
@@ -403,7 +403,7 @@ Year_t_validation <- coefficients(part_tu04_sex_linear_model_summary_validation)
 lm_p_value_validation <- pt(Year_t_validation, part_tu04_sex_linear_model_validation$df, lower=TRUE)
 ```
 
-As with EDA, but this time formally, a linear model is built using *Sex* and *Year* and a $t$-test performed. It gives $a$ p-value $< 0.05$. This means there is sufficient evidence to conclude that the proportion of American's who participate in caring for & helping non-household members has decreased over the period 2003-2017.
+As with EDA, but this time formally, a linear model is built using *Sex* and *Year* and a $t$-test performed. It gives $a$ p-value $<< 0.05$. This means there is sufficient evidence to conclude that the proportion of American's who participate in caring for & helping non-household members has infact decreased over the period 2003-2017 as suggested by the EDA.
 
 ```{r part_tu04 Sex Model Validation, message=FALSE, echo=FALSE, warning=FALSE, cache=TRUE}
 n2_validation <- nrow(part_sex_weighted_means_data_validation)
@@ -422,7 +422,7 @@ part_tu04_sex_plot_validation <- ggplot(part_sex_weighted_means_data_validation,
   geom_ribbon(data = filter(part_tu04_sex_predicted_validation, TESEX =="F"), aes(y=fitted, ymin=ymin, ymax=ymax),alpha=0.1)
 ```
 
-The initial thoughts about the link with number of household children, from the EDA, again needed to be tested. A new model of the same structure (natural spline with log link and multiplicative error) was built. A formal t-test could then be completed on an update of this model which includes the number of household children.
+The initial thoughts about the link with number of household children, from the EDA, again needed to be tested. A new model of the same structure  was built. Another formal t-test could then be completed on an update of this model which includes the number of household children.
 
 ```{r Adding TRCHILDNUM to model Validation, echo=FALSE, message=FALSE, cache=TRUE}
 Data_minus_columns_year_sex_child_grouped_validation <- Data_minus_columns_validation
@@ -452,7 +452,7 @@ sex_child_summary_for_t_test_validation <- summary(part_tu04_sex_child_model_val
 sex_child_p_value_validation <- coefficients(sex_child_summary_for_t_test_validation)[1,4]
 ```
 
-With a $p$-value << 0.05, this test confirms this belief in the validation data.
+With a $p$-value $<< 0.05$, this test confirms this belief in the validation data.
 
 ```{r Plotting Data Tidying, echo=FALSE, message=FALSE, cache=TRUE}
 #remove full time vs part time as has -1
@@ -529,7 +529,7 @@ part_tu04_sex_TRCHILDNUM_plot_plotting <- ggplot(part_sex_weighted_means_data_pl
   scale_x_continuous(breaks = seq(2003,2017,2)) + xlab("Year") + ylab("Average number of children") + labs(color="Sex", fill="Sex") + theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 ```
 
-We have now verified that the conclusions are correct: the percentage of American's who partake in caring for & helping non-household members has decreased over the period from 2003 to 2017. There also seems to be a link between the number of children in the household and the participation percentage.
+We have now verified that the conclusions suggested by the EDA are correct: the percentage of American's who partake in caring for & helping non-household members has decreased over the period from 2003 to 2017. There also seems to be a link between the number of children in the household and the participation percentage.  The plot below gives a graphical interpretation of changes using a model fit on all the data, only excluding those responses taken in July for each year.
 
 ```{r part_tu04 Sex Plot with Number of Children Plotting, message=FALSE, echo=FALSE, cache=TRUE}
 print(part_tu04_sex_TRCHILDNUM_plot_plotting)
@@ -654,7 +654,7 @@ For each of the activities, a suitable generalized linear model was developed us
 
 ## Validation
 
-In order to validate the trends found in the EDA, the dataset was initially split 
+In order to validate the trends found in the EDA, the dataset was initially split
 
 ### Working
 

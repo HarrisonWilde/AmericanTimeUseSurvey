@@ -84,6 +84,8 @@ if (!require("rgeos")){
 } # To calculate the centre of each state for map use (https://www.rdocumentation.org/packages/rgeos/versions/0.4-2)
 ```
 
+2 key conclusions are mentioned in the report. The code below shows the methods used to reach these conclusions. Both follow the structure of Exploratory Analysis, Validation and then a final plot using all the data, excluding July.
+
 # Loading and Tidying the Data
 
 Import the datasets required from the ATUS [@ATUS] corpus of data. Summary and CPS files are used primarily.
