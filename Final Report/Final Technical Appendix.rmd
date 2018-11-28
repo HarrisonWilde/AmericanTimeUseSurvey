@@ -1,3 +1,4 @@
+
 ---
 title: "Exploratory Analysis"
 author: "Dan"
@@ -77,8 +78,6 @@ if (!require("rgeos")){
 } # To calculate the centre of each state for map use (https://www.rdocumentation.org/packages/rgeos/versions/0.4-2)
 ```
 
-2 key conclusions are mentioned in the report. The code below shows the methods used to reach these conclusions. Both follow the structure of Exploratory Analysis, Validation and then a final plot using all the data, excluding July.
-
 # Loading and Tidying the Data
 
 Import the datasets required from the ATUS [@ATUS] corpus of data. Summary and CPS files are used primarily.
@@ -102,7 +101,6 @@ ATUS_dataset_edit <- select(ATUS_dataset_edit, -one_of(c("GEMETSTA", "GTMETSTA")
 # Set suitable variables as factors
 factor_columns <- c("PEEDUCA", "PEHSPNON", "PTDTRACE", "TELFS", "TEMJOT", "TESCHENR", "TESCHLVL", "TESEX", "TESPEMPNOT", "TRDPFTPT", "TRERNWA", "TRHOLIDAY", "TRSPFTPT", "TRSPPRES", "TUDIARYDAY", "TEHRUSLT")
 ATUS_dataset_edit[,factor_columns] <- lapply(ATUS_dataset_edit[,factor_columns], factor)
-
 # Create time spent and participation columns with the 17 Categories
 for (i in 1:9){
   assign(paste0("tu0", i), ATUS_dataset_edit[,grep(paste0("^t0", i), names(ATUS_dataset_edit))])
@@ -122,14 +120,11 @@ for (i in c(10:16, 18)){
   ATUS_dataset_edit <- bind_cols(ATUS_dataset_edit, part_tu0 = get(paste0("part_tu", i)))
   names(ATUS_dataset_edit)[ncol(ATUS_dataset_edit)] <- paste0("part_tu", i)
 }
-
 # Remove odd months (including July) for validation purposes
 ATUS_training_data <- filter(ATUS_dataset_edit, month(TUDIARYDATE) %in% c(2,4,6,8,10,12))
 ATUS_validation_data <- filter(ATUS_dataset_edit, month(TUDIARYDATE) %in% c(1,3,5,7,9,11))
 ATUS_plotting_data <- filter(ATUS_dataset_edit, month(TUDIARYDATE) != 7)
-
 # Remove columns with -1's, -3's, -4's. We do this instead of removing rows as we would only be left with 1431 observations
-
 #remove full time vs part time as has -1 (35304 times)
 Data_minus_columns <- select(ATUS_training_data, -one_of("TRDPFTPT"))
 #remove full time vs part time spouse as has -1 (59784 times)
@@ -148,12 +143,6 @@ Data_minus_columns <- select(Data_minus_columns, -one_of("TRERNWA"))
 Data_minus_columns <- select(Data_minus_columns, -one_of("TEHRUSLT"))
 ```
 
-# The Compelling Change in Caring for & Helping Non-HH Members
-
-## Exploratory Data Analysis
-
-The weighed means for each year are calculated for the 17 activity groups, both in minuted and % participation.
-
 ```{r Weighted Means, echo=FALSE, message=FALSE}
 Data_minus_columns_year_grouped <- Data_minus_columns %>% group_by(TUYEAR)
 weighted_means_data <- as_tibble(data.frame(TUYEAR = 2003:2017))
@@ -171,7 +160,6 @@ for (i in c(10:16, 18)){
   part_weighted_means_data <- full_join(part_weighted_means_data, summarise_at(Data_minus_columns_year_grouped, vars((paste0("part_tu", i))), funs(weighted.mean(., TUFNWGTP))))
 }
 ```
-An overall summary of the actvity groups is created by the code below. It shows we need to look deeper to find interesting changes.
 
 ```{r Initial Summary Data, echo=FALSE, message=FALSE}
 melted_participation_data <- melt(select(part_weighted_means_data, "TUYEAR", grep("^part_tu", names(part_weighted_means_data))), id.vars="TUYEAR")
@@ -188,7 +176,8 @@ print(part_summary_plot)
 print(summary_plot)
 ```
 
-To get an better idea of which variables changed the most over the period, tables containing the percentage change from 2003 to 2017 and the variance over the period is created.
+The ATUS dataset records time spent on activities in minutes. This report initially looks at how the proportion of American's partaking in the 17 different groups of activities has changed.
+The following table gives a summary of some of these changes. The activities included are those with a percentage change of over 10% and a variance greater than 0.5.  
 
 ```{r Weighted Means Variance and Percentage Change, echo=FALSE}
 variance <- sapply(weighted_means_data, function(col) var(col))
@@ -541,7 +530,7 @@ Apply some reformatting to the data imported previously to better fit the explor
 ```{r, cache=TRUE}
 # Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
 ATUS_dataset$TUBIRTHYEAR <- ATUS_dataset$TUYEAR - ATUS_dataset$TEAGE
-ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation",
+ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation", 
     ifelse(ATUS_dataset$TUBIRTHYEAR < 1965, "Baby Boomers",
         ifelse(ATUS_dataset$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
@@ -554,7 +543,7 @@ Next, collections of variable representing traditional gender roles can be extra
 ```{r, cache=TRUE}
 # Create a data frame from relevant variables within ATUS Summary
 Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
-# Create variables to be added to a data frame with relevant gender activities
+# Create variables to be added to a data frame with relevant gender activities 
 Working <- ATUS_dataset[, grep("^t05", names(ATUS_dataset))]
 House.Maintenance <- ATUS_dataset[, grep("^t0204", names(ATUS_dataset))]
 Vehicle.Maintenance <- ATUS_dataset[, grep("^t0207", names(ATUS_dataset))]
@@ -690,12 +679,28 @@ fit.models.and.plot(Gender.Roles.Plotting, 'Food.Preparation', 60)
 fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
 ```
 
-
+```{r}
+Gender.Roles.Validate <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 != 0)
+Gender.Roles.Differences <- data.frame('Year' = c(), 'Variable' = c(), 'Difference' = c())
+for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
+    for (year in unique(Gender.Roles.Validate$TUYEAR)) {
+        for (sex in c("M", "F")) {
+            Filtered.Data <- filter(Gender.Roles.Validate, TESEX == sex, TUYEAR == year)
+            bottom.sum <- sum(Filtered.Data$TUFNWGTP)
+            top.sum <- sum(Filtered.Data$TUFNWGTP * Filtered.Data[,variable])
+            weighted.values <- top.sum / bottom.sum
+            if (sex == 'M') m.weighted.values <- weighted.values
+        }
+        weighted.difference <- m.weighted.values - weighted.values
+        Gender.Roles.Differences <- rbind(Gender.Roles.Differences, data.frame('Year' = year, 'Variable' = variable, 'Difference' = unique(weighted.difference)))
+    }
+}
+```
 Code for running $t$-tests
 
 ```{r}
-Gender.Roles.Differences.Validate <- filter(Gender.Roles.Differences, Month %% 2 != 0)
-for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
+for (variable in c("Working", "Housework", "Food.Preparation", "Childcare")) {
+    print(variable)
     Filtered.Data <- filter(Gender.Roles.Differences, Variable == variable)
     model <- lm(data=Filtered.Data, Difference ~ Year)
     summary <- summary(model)
@@ -703,7 +708,6 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
     Year_t <- coefficients(summary)[2,3]
     lm_p_value <- pt(Year_t, model$df, lower=TRUE)
     print(lm_p_value)
-    plot(x = Filtered.Data$Year, y = Filtered.Data$Difference)
 }
 ```
 
