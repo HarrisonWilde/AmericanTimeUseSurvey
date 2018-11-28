@@ -93,6 +93,8 @@ if (!require("rgeos")){
 
 # The Compelling Change in Caring for & Helping Non-HH Members
 
+## Exploratory Data Analysis
+
 ```{r Import Data, echo=FALSE, message=FALSE}
 ATUS_dataset <- import("atussum_0317.csv", setclass = "tibble")    # import raw summary data as TIBBLE
 ATUS.CPS <- import('atuscps_0317.csv', setclass = "tibble") # import CPS data as TIBBLE for geographical data use
@@ -375,7 +377,7 @@ sex_child_p_value <- coefficients(sex_child_summary_for_t_test)[1,4]
 ```
 The key observation is that, as the table suggested, over the period the participation in caring for & helping non-household members has decreased for both men and women. Building a linear model using **Sex** and **Year** and performing a t-test confirms this. There also appears to be a link between participation in caring for & helping non-household members and the number of household children. Updating the spline curve model to include the number of household children and then again testing this hypothesis with a t-test confirms this is the case. Looking at the graph, fluctuations in the average number of household children, on the whole seem to be followed by but if we check the correlations between them, they show this link is fairly weak (0.65 for Men and 0.49 for Women), suggesting there must be further reasons for this change; possibly not measured in this dataset.
 
-#Validation
+## Validation
 
 ```{r Validation Data Tidying, echo=FALSE, message=FALSE}
 #remove full time vs part time as has -1
@@ -442,7 +444,7 @@ part_tu04_sex_plot_validation <- ggplot(part_sex_weighted_means_data_validation,
   geom_ribbon(data = filter(part_tu04_sex_predicted_validation, TESEX =="F"), aes(y=fitted, ymin=ymin, ymax=ymax),alpha=0.1)
 ```
 
-The initial thoughts about the link with number of household children, from the EDA, again needed to be tested. A new model of the same structure (natural spline with log link and multiplicative error) was built. A formal t-test could then be completed on an updat of this model which includes the number of household children.
+The initial thoughts about the link with number of household children, from the EDA, again needed to be tested. A new model of the same structure (natural spline with log link and multiplicative error) was built. A formal t-test could then be completed on an update of this model which includes the number of household children.
 
 ```{r Adding TRCHILDNUM to model Validation, echo=FALSE, message=FALSE}
 Data_minus_columns_year_sex_child_grouped_validation <- Data_minus_columns_validation
@@ -560,7 +562,7 @@ part_tu04_sex_TRCHILDNUM_plot_plotting <- ggplot(part_sex_weighted_means_data_pl
 print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 ```
 
-## How The Time Spent on Traditionally Gendered Activities has Converged as Gender Roles have Broken Down
+# How The Time Spent on Traditionally Gendered Activities has Converged as Gender Roles have Broken Down
 
 ```{r, cache=TRUE, include=FALSE}
 # Import ATUS Summary file
@@ -712,7 +714,7 @@ fit.models.and.plot(Gender.Roles.Plotting, 'Housework', 50)
 
 The graphs above show that for all generations, except for *Millennials*, there has been a decrease in the gap between men and women. This is as a result of men spending more time and women spending less time on housework, although the decrease for women is sharper than the increase for men. This trend is reflected strongest in *Generation X*, the second youngest generation, however, there is also strong evidence for this trend in the *Silent Generation* despite the slight rise in women in 2016. On the other hand, the gap seems to have increased slightly for *Millennials* - both sexes are increasing the amount of time spent on housework, but the increase is not as severe for men. Notably, *Millennials* also spend substantially less time doing housework than the other generations, with the highest point being around 45 minutes per day (women in 2016), compared to around 62 in *Baby Boomers* and *Generation X* and 72 in the *Silent Generation*. Therefore, whilst the gap is increasing for *Millennials*, it is still smaller than all of the other generations at around 25 minutes. Comparatively, the *Silent Generation's* gap started at over 50 minutes in 2003 and has decreased to just under 45.
 
-### Food Preparation
+### Cooking
 
 ```{r, echo=FALSE, warning=FALSE, fig.height=4, fig.width=10, fig.align='c'}
 fit.models.and.plot(Gender.Roles.Plotting, 'Food.Preparation', 60)
@@ -729,10 +731,6 @@ fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
 ```
 
 These graphs show perhaps the greatest change in gender roles. The data for *Baby Boomers* and the *Silent Generation* shows very little, most likely as the variables included in childcare relate only to caring for household children, where a child is defined as someone below the age of 18. It is unlikely that many people within these generations would have children living with them at this age (in fact checking the data confirms that, in 2017, only 9% met this criteria). Furthermore at this age, their children are likely to be older and require less constant care as they become more independent. Therefore, the other generations, *Millennials* and *Generation X*, reflect more interesting trends. For reasons similar to the older generations, the drop off in childcare at the end of *Generation X* can likely be explained as children mature; however, the drop off for women is sharper than it is for men, leading to a convergence in the lines. The gap has decreased substantially, from 50 minutes per day in 2003 to less than half that, around 20 minutes in 2017. This could further be attributed to the decrease in working time for this generation, noted above. The *Millennials* on the other hand relfect an increase year on year for childcaring activities. Whilst the gap increases slightly over time, it doesn't ever reach a similar point to that of *Generation X*, with the biggest difference being around 40% compared to that of 60%.
-
-# Conclusions
-
-Summarise all of our conclusions here.
 
 # Limitations of the Data
 
