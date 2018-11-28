@@ -588,7 +588,9 @@ Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 2] <- "F"
 Gender.Roles.Data <- inner_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASEID')
 ```
 
+This for-loop structure calculates weighted means for each possible combination of `variable`, `month`, `generation`, `region`, `year` and `sex`, which are to be used in modelling the data. The means are calculated for a demographic represented by one of these combinations and then attached to `Gender.Roles.Data` so that all of the individuals within that demographic / that conform to that combination have a weighted mean value for each variable.
 
+This for loop also calculates a `Gender.Roles.Differences` data frame to store the differences between genders in the weighted mean values corresponding to each combination of `variable`, `month`, `generation` and `year`. These differences can then be used to perform statistical tests on the changes over the given period of data in the time use within each of the investigated variables to study how gender roles have changed.
 
 ```{r, cache=TRUE}
 Gender.Roles.Differences <- data.frame('Year' = c(), 'Month' = c(), 'Variable' = c(), 'Generation' = c(), 'Difference' = c())
@@ -598,7 +600,7 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
         for (year in unique(Gender.Roles.Data$TUYEAR)) {
             for (month in unique(month(Gender.Roles.Data$TUDIARYDATE))) {
                 for (sex in c("M", "F")) {
-                    Filtered.Data <- filter(Gender.Roles.Data, TESEX == sex, TUYEAR == year, month(TUDAIRYDATE) == month, TUGENERATION == generation)
+                    Filtered.Data <- filter(Gender.Roles.Data, TESEX == sex, TUYEAR == year, month(TUDIARYDATE) == month, TUGENERATION == generation)
                     bottom.sum <- sum(Filtered.Data$TUFNWGTP)
                     top.sum <- sum(Filtered.Data$TUFNWGTP * Filtered.Data[,variable])
                     weighted.values <- top.sum / bottom.sum
@@ -675,7 +677,7 @@ fit.models.and.plot <- function(Data, variable, mu) {
 
 Generate plots for EDA to observe potential long-term trends over time for each of the chosen variables to investigate. `mu` values were experimented with once the data was first observe to roughly fall within the range of plotted values for each model.
 
-```{r}
+```{r, cache = TRUE}
 fit.models.and.plot(Gender.Roles.Train, 'Working', 250)
 fit.models.and.plot(Gender.Roles.Train, 'House.Maintenance', 30)
 fit.models.and.plot(Gender.Roles.Train, 'Vehicle.Maintenance', 30)
@@ -708,4 +710,49 @@ fit.models.and.plot(Gender.Roles.Plotting, 'Housework', 50)
 fit.models.and.plot(Gender.Roles.Plotting, 'Food.Preparation', 60)
 # Plot found in the Childcare section
 fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
+```
+
+Rename to something to do with map or region
+
+```{r}
+region.weighted.differences <- function(Data) {
+    Gender.Roles.Differences <- data.frame('Year' = c(), 'Variable' = c(), 'Generation' = c(), 'Difference' = c())
+    for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
+        for (generation in c("Silent Generation", "Baby Boomers", "Generation X", "Millennials")) {
+            for (year in unique(Data$TUYEAR)) {
+                for (region in 1:4) {
+                    for (sex in c("M", "F")) {
+                        Filtered.Data <- filter(Data, TESEX == sex, TUYEAR == year, TUGENERATION == generation, GEREG == region)
+                        bottom.sum <- sum(Filtered.Data$TUFNWGTP)
+                        top.sum <- sum(Filtered.Data$TUFNWGTP * Filtered.Data[,variable])
+                        weighted.values <- top.sum / bottom.sum
+                        if (sex == 'M') m.weighted.values <- weighted.values
+                    }
+                    weighted.difference <- m.weighted.values - weighted.values
+                    Gender.Roles.Differences <- rbind(Gender.Roles.Differences, data.frame('Year' = year, 'Variable' = variable, 'Generation' = generation, 'Difference' = unique(weighted.difference)))
+                }
+            }
+        }
+    }
+    return(Gender.Roles.Differences)
+}
+
+Gender.Roles.Differences.Region.Train <- region.weighted.differences(Gender.Roles.Train)
+Gender.Roles.Differences.Region.Validate <- region.weighted.differences(Gender.Roles.Validate)
+Gender.Roles.Differences.Region.Plotting <- region.weighted.differences(Gender.Roles.Plotting)
+```
+
+Code for running $t$-tests
+
+```{r}`
+Gender.Roles.Differences.Validate <- filter(Gender.Roles.Differences, month(TUDIARYDATE) %% 2 != 0)
+for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
+    filter(Gender.Roles.Differences, 'Variable' == variable)
+    model <- lm(data=Gender.Roles.Differences.Validate, Difference ~ Year)
+    summary <- summary(model)
+    print(summary)
+    Year_t <- coefficients(summary)[2,3]
+    lm_p_value <- pt(Year_t, model$df, lower=TRUE)
+    print(lm_p_value)
+}
 ```
