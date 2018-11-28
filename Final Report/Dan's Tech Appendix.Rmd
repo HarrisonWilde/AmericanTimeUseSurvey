@@ -518,6 +518,9 @@ ATUS.CPS.States <- distinct(ATUS.CPS.States)
 Next, collections of variable representing traditional gender roles can be extracted. `ATUS_dataset` can then be subsetted to 'Gender.Roles.Data', including only relevant variables. Each of the collections of gender role variables can be appended to this dataset by summing over all of the relevant sub-variables. E.g. `t05` and all suffixes of this expression represent time spent working, so these can be summed over and collected under one variable in `Gender.Roles.Data$Working`.
 
 ```{r, cache=TRUE}
+# Create a data frame from relevant variables within ATUS Summary
+Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
+
 # Create variables to be added to a data frame with relevant gender activities 
 Working <- ATUS_dataset[, grep("^t05", names(ATUS_dataset))]
 House.Maintenance <- ATUS_dataset[, grep("^t0204", names(ATUS_dataset))]
@@ -525,9 +528,7 @@ Vehicle.Maintenance <- ATUS_dataset[, grep("^t0207", names(ATUS_dataset))]
 Housework <- ATUS_dataset[, grep("^t0201", names(ATUS_dataset))]
 Food.Preparation <- ATUS_dataset[, grep("^t0202", names(ATUS_dataset))] + ATUS_dataset$t070101 + ATUS_dataset$t070103
 Childcare <- ATUS_dataset[, grep("^t03", names(ATUS_dataset))]
-# Create a data frame from relevant variables within ATUS Summary
-# Childnum there for future use
-Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TRCHILDNUM, TUDIARYDATE, TUGENERATION)
+
 # Add in relevant categories
 Gender.Roles.Data$Working <- rowSums(Working)
 Gender.Roles.Data$House.Maintenance <- rowSums(House.Maintenance)
@@ -535,15 +536,18 @@ Gender.Roles.Data$Vehicle.Maintenance <- rowSums(Vehicle.Maintenance)
 Gender.Roles.Data$Housework <- rowSums(Housework)
 Gender.Roles.Data$Food.Preparation <- rowSums(Food.Preparation)
 Gender.Roles.Data$Childcare <- rowSums(select(Childcare, t030101:t030399))
+
+# Encode Gender as M and F rather than a number
 Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 1] <- "M"
 Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 2] <- "F"
+
 # Join this dataset with the CPS states info by unique id number of particiapnt
 Gender.Roles.Data <- inner_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASEID')
 ```
 
+
+
 ```{r, cache=TRUE}
-# weighted.valuesM <- c()
-# weighted.valuesF <- c()
 Gender.Roles.Differences <- data.frame('Year' = c(), 'Month' = c(), 'Variable' = c(), 'Generation' = c(), 'Difference' = c())
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
     Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
@@ -572,14 +576,18 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
 }
 ```
 
+Split the full dataset into `Train`, `Validate` and `Plotting` subsets, where `Train` includes all of the even-numbered months, `Validate` contains all of the odd-numbered months
+
 ```{r, cache=TRUE}
 Gender.Roles.Train <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 == 0)
 Gender.Roles.Validate <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 != 0)
 Gender.Roles.Plotting <- filter(Gender.Roles.Data, month(TUDIARYDATE) != 7)
 ```
 
+Below is a function which fits models on the passed dataset (one of the ones defined above) and then generates predictions with which plots can be made. This function is called multiple times below with appropriate `mu` start values passed to ensure the `glm()` algorithm converges. These plots are used extensively in the Gender Roles section of the report.
+
 ```{r, cache=TRUE}
-# Make a variable for all years. 
+# Make a vector containing each year as a Date object to be used in generating splines for the models
 Dates = c()
 for (i in 4:17) {
     if (i < 10) {
@@ -592,6 +600,7 @@ for (i in 4:17) {
 fit.models.and.plot <- function(Data, variable, mu) {
     # Start building models for the data
     n <- nrow(Data)
+    # Commented code contrains different number of splines, it was decided to use as many splines as there are years in the data
     # model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
     model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(mu, n))
     model2 <- update(model1, . ~ . + TESEX)
@@ -608,6 +617,7 @@ fit.models.and.plot <- function(Data, variable, mu) {
 
     df <- data.frame(age = c(filter(Data, TESEX == 'M')$TEAGE, filter(Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Data, TESEX == 'M')$TUDIARYDATE, filter(Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Data, TESEX == 'M')$TESEX, filter(Data, TESEX == 'F')$TESEX), region = c(filter(Data, TESEX == 'M')$GEREG, filter(Data, TESEX == 'F')$GEREG), generation = c(filter(Data, TESEX == "M")$TUGENERATION, filter(Data, TESEX == "F")$TUGENERATION))
 
+    # Don't want to include the Silent Generation for Working and Childcare as this generation's values are all very close to 0 which caused some issues; uninteresting
     if (variable == 'Working' | variable == 'Childcare') {
         print(ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) + 
         geom_line() + 
@@ -620,6 +630,8 @@ fit.models.and.plot <- function(Data, variable, mu) {
 }
 ```
 
+Generate plots for EDA to observe potential long-term trends over time for each of the chosen variables to investigate. `mu` values were experimented with once the data was first observe to roughly fall within the range of plotted values for each model.
+
 ```{r}
 fit.models.and.plot(Gender.Roles.Train, 'Working', 250)
 fit.models.and.plot(Gender.Roles.Train, 'House.Maintenance', 30)
@@ -629,7 +641,7 @@ fit.models.and.plot(Gender.Roles.Train, 'Food.Preparation', 60)
 fit.models.and.plot(Gender.Roles.Train, 'Childcare', 50)
 ```
 
-Generate plots 
+Generate plots to validate the trends obvserved above are consistent in the other half of the data.
 
 ```{r, cache=TRUE}
 fit.models.and.plot(Gender.Roles.Validate, 'Working', 250)
@@ -640,13 +652,17 @@ fit.models.and.plot(Gender.Roles.Validate, 'Food.Preparation', 60)
 fit.models.and.plot(Gender.Roles.Validate, 'Childcare', 50)
 ```
 
-Generate plots on the entire dataset with the exception of July which is the directed month to excluse in analysis for this project.
+Generate plots on the entire dataset with the exception of July which is the directed month to exclude for this project. These plots are the ones included in the final report.
 
 ```{r, cache=TRUE}
+# Plot found in the Working section
 fit.models.and.plot(Gender.Roles.Plotting, 'Working', 250)
 fit.models.and.plot(Gender.Roles.Plotting, 'House.Maintenance', 30)
 fit.models.and.plot(Gender.Roles.Plotting, 'Vehicle.Maintenance', 30)
+# Plot found in the Housework section
 fit.models.and.plot(Gender.Roles.Plotting, 'Housework', 50)
+# Plot found in the Food Preparation section
 fit.models.and.plot(Gender.Roles.Plotting, 'Food.Preparation', 60)
+# Plot found in the Childcare section
 fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
 ```
