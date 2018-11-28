@@ -73,6 +73,7 @@ if (!require("rgeos")){
   library("rgeos")
 } # To calculate the centre of each state for map use (https://www.rdocumentation.org/packages/rgeos/versions/0.4-2)
 ```
+
 # Loading and Tidying the Data
 
 ```{r Import Data, echo=FALSE, message=FALSE}
@@ -579,10 +580,6 @@ Gender.Roles.Data$Vehicle.Maintenance <- rowSums(Vehicle.Maintenance)
 Gender.Roles.Data$Housework <- rowSums(Housework)
 Gender.Roles.Data$Food.Preparation <- rowSums(Food.Preparation)
 Gender.Roles.Data$Childcare <- rowSums(select(Childcare, t030101:t030399))
-
-# Encode Gender as M and F rather than a number
-Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 1] <- "M"
-Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 2] <- "F"
 
 # Join this dataset with the CPS states info by unique id number of particiapnt
 Gender.Roles.Data <- inner_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASEID')
