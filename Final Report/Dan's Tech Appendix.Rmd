@@ -496,12 +496,14 @@ part_tu04_sex_child_model_validation <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX 
                           mustart = rep(5, n3_validation))
 ```
 
-The t-test is completed on the model
+The t-test is completed on the model and confirms the belief that there is a link is true.
 
 ```{r Testing the new model Validation, eval=TRUE, echo=FALSE, message=FALSE, fig.height=4}
 sex_child_summary_for_t_test_validation <- summary(part_tu04_sex_child_model_validation)
 sex_child_p_value_validation <- coefficients(sex_child_summary_for_t_test_validation)[1,4]
 ```
+
+To plot the results, all of the data, exluding those for July, is used. The same method of tidying the data, calculating weighted means, building a spline curve glm model with log link and multiplicative error and plotting a graphical interpretation of the model is performed.
 
 ```{r Plotting Data Tidying, echo=FALSE, message=FALSE}
 #remove full time vs part time as has -1
@@ -600,7 +602,7 @@ Apply some reformatting to the data imported previously to better fit the explor
 ```{r, cache=TRUE}
 # Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
 ATUS_dataset$TUBIRTHYEAR <- ATUS_dataset$TUYEAR - ATUS_dataset$TEAGE
-ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation", 
+ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation",
     ifelse(ATUS_dataset$TUBIRTHYEAR < 1965, "Baby Boomers",
         ifelse(ATUS_dataset$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
 
@@ -615,7 +617,7 @@ Next, collections of variable representing traditional gender roles can be extra
 # Create a data frame from relevant variables within ATUS Summary
 Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
 
-# Create variables to be added to a data frame with relevant gender activities 
+# Create variables to be added to a data frame with relevant gender activities
 Working <- ATUS_dataset[, grep("^t05", names(ATUS_dataset))]
 House.Maintenance <- ATUS_dataset[, grep("^t0204", names(ATUS_dataset))]
 Vehicle.Maintenance <- ATUS_dataset[, grep("^t0207", names(ATUS_dataset))]
