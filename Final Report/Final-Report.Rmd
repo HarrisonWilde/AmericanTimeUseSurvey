@@ -498,7 +498,7 @@ fit.models.and.plot(Gender.Roles.Plotting, 'Working', 250)
 
 ### House Maintenance and Vehicle Maintenance
 
-For both of these variables, it was decided that the participation rate was too low to warrant deeper analysis. Whilst the findings represented that there existed a separation in gender, with men spending more time on both of these activities, the participation rates of around 3% for both refelcted that these were more uncommon activities. As such, it was decided that there was not enough data to reflect the time spent on these activities in a suitable linear model.
+For both of these variables, it was decided that the participation rate was too low to warrant deeper analysis. Whilst the findings represented that there existed a separation in gender, with men spending more time on both of these activities, the participation rates of around 3% for both reflected that these were more uncommon activities. As such, it was decided that there was not enough data to reflect the time spent on these activities in a suitable linear model.
 
 ### Housework
 
