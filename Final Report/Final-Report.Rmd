@@ -17,7 +17,7 @@ header-includes:
 
 # Introduction
 
-The aim of this report is to discover how Americans' time use patterns have changed over the last 15 years, through discovering and analysing long-term trends over the years of 2003 to 2017. The datasets [@atusdatasets] used to tackle this comprise some of the results of the American Time Use Survey (ATUS) [@ATUS]. ATUS respondents were interviewed once about how they spent their time on the previous day, where they were, and whom they were with. The survey records the time spent on 431 different activities that are grouped into 17 different categories. In the analysis these categories will often be referred to by a variable beginning with `tu` followed by a two-digit *category number*. The meaning of each category number and identifications of the rest of the variables can be found in the lexicon and data dictionary files which are available on the [ATUS website](https://www.bls.gov/tus/lexiconnoex0317.pdf).
+The aim of this report is to discover how Americans' time use patterns have changed over the last 15 years, through discovering and analysing long-term trends over the years of 2003 to 2017. The datasets [@atusdatasets] used to tackle this comprise some of the results of the American Time Use Survey (ATUS) [@ATUS]. ATUS respondents were interviewed once about how they spent their time on the previous day, where they were, and whom they were with. The survey records the time spent on 431 different activities that are grouped into 17 different categories. In the analysis these categories will often be referred to by a variable beginning with `tu` followed by a two-digit *category number*. The meaning of each category number and identifications for the rest of the variables can be found in the lexicon and data dictionary files which are available on the [ATUS website](https://www.bls.gov/tus/lexiconnoex0317.pdf).
 
 The [Bureau of Labor Statistics website](https://www.bls.gov/tus/charts.htm) provides a number of charts looking at the 2017 annual averages for these categories. This report provides a more definitive conclusion on how time use patterns changed over the period, evidenced with statistical investigation of the data. The findings offer in-depth explanations as to where some of the biggest fluctuations are and suggests possible reasons for these fluctuations. Limitations to the analysis are noted where appropriate and these must be taken into account when performing any further analysis or summaries, and mentioned alongside any conclusions.
 
@@ -103,20 +103,16 @@ ATUS.CPS <- import('atuscps_0317.csv', setclass = "tibble") # import CPS data as
 ```{r Tidying the Data, echo=FALSE, message=FALSE, cache=TRUE}
 # Check there are no other NA's other than those in format explained in the notes
 NA_check <- sum(is.na(ATUS.SUM))
-
 # Add date from respondent file and change Sex values to M and F instead of 1 and 2
 ATUS.SUM <- mutate(ATUS.SUM, TESEX = ifelse(TESEX == 1, "M", "F"))
 # Create a diary date column based off of the unique ID
 ATUS.SUM$TUDIARYDATE <- as.Date(paste0(substr(ATUS.SUM$TUCASEID, 1, 6), '01'), "%Y%m%d")
-
 # A change of variable name in this period leads to missing values so we merge these 2 variables
 ATUS_dataset <- mutate(ATUS.SUM, Met_Status = as.factor(pmax(GEMETSTA, GTMETSTA)))
 ATUS_dataset <- select(ATUS_dataset, -one_of(c("GEMETSTA", "GTMETSTA")))
-
 # Set suitable variables as factors
 factor_columns <- c("PEEDUCA", "PEHSPNON", "PTDTRACE", "TELFS", "TEMJOT", "TESCHENR", "TESCHLVL", "TESEX", "TESPEMPNOT", "TRDPFTPT", "TRERNWA", "TRHOLIDAY", "TRSPFTPT", "TRSPPRES", "TUDIARYDAY", "TEHRUSLT")
 ATUS_dataset[,factor_columns] <- lapply(ATUS_dataset[,factor_columns], factor)
-
 # Create time spent and participation columns with the 17 Categories
 for (i in 1:9){
   assign(paste0("tu0", i), ATUS_dataset[,grep(paste0("^t0", i), names(ATUS_dataset))])
@@ -136,14 +132,11 @@ for (i in c(10:16, 18)){
   ATUS_dataset <- bind_cols(ATUS_dataset, part_tu0 = get(paste0("part_tu", i)))
   names(ATUS_dataset)[ncol(ATUS_dataset)] <- paste0("part_tu", i)
 }
-
 # The data is split for use in exploratory analysis, verification and then finally plotting with almost all the data
 ATUS_training_data <- filter(ATUS_dataset, month(TUDIARYDATE) %in% c(2,4,6,8,10,12))
 ATUS_validation_data <- filter(ATUS_dataset, month(TUDIARYDATE) %in% c(1,3,5,7,9,11))
 ATUS_plotting_data <- filter(ATUS_dataset, month(TUDIARYDATE) != 7)
-
 # Remove columns with -1's, -3's, -4's. We do this instead of removing rows as we would only be left with 1431 observations
-
 #remove full time vs part time as has -1 (35304 times)
 Data_minus_columns <- select(ATUS_training_data, -one_of("TRDPFTPT"))
 #remove full time vs part time spouse as has -1 (59784 times)
@@ -164,7 +157,6 @@ Data_minus_columns <- select(Data_minus_columns, -one_of("TEHRUSLT"))
 
 ```{r Weighted Means, echo=FALSE, message=FALSE, cache=TRUE}
 Data_minus_columns_year_grouped <- Data_minus_columns %>% group_by(TUYEAR)
-
 weighted_means_data <- as_tibble(data.frame(TUYEAR = 2003:2017))
 for (i in 1:9){
   weighted_means_data <- full_join(weighted_means_data, summarise_at(Data_minus_columns_year_grouped, vars((paste0("tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -172,7 +164,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   weighted_means_data <- full_join(weighted_means_data, summarise_at(Data_minus_columns_year_grouped, vars((paste0("tu", i))), funs(weighted.mean(., TUFNWGTP))))
 }
-
 part_weighted_means_data <- as_tibble(data.frame(TUYEAR = 2003:2017))
 for (i in 1:9){
   part_weighted_means_data <- full_join(part_weighted_means_data, summarise_at(Data_minus_columns_year_grouped, vars(paste0("part_tu0", i)), funs(weighted.mean(., TUFNWGTP))))
@@ -197,15 +188,13 @@ print(part_summary_plot)
 print(summary_plot)
 ```
 
-The ATUS dataset records time spent on activities in minutes. This report initially looks at how the proportion of American's partaking in the 17 different groups of activities has changed.
-The following table gives a summary of some of these changes. The activities included are those with a percentage change of over 10% and a variance greater than 0.5.
+The ATUS dataset records time spent on activities in minutes. The initial concern of the EDA is to look at how the proportion of American's partaking in the 17 categories of activities has changed. The following table gives a summary of some of these changes. The activities included are those with a percentage change of over 10% and a variance greater than 0.5, i.e those which are deemed to be of interest for further analysis and exploration.
 
 ```{r Weighted Means Variance and Percentage Change, echo=FALSE, cache=TRUE}
 variance <- sapply(weighted_means_data, function(col) var(col))
 percentage_change <- (weighted_means_data[15,]/weighted_means_data[1,] - 1)*100
 Activity_year_measures <- bind_rows(variance, percentage_change)
 Activity_year_measures <- bind_cols(as_tibble(data.frame(Measure = c("Variance", "% Change"))), select(Activity_year_measures, -TUYEAR))
-
 part_variance <- sapply(part_weighted_means_data, function(col) var(col))
 part_percentage_change <- (part_weighted_means_data[15,]/part_weighted_means_data[1,] - 1)*100
 part_Activity_year_measures <- bind_rows(part_variance, part_percentage_change)
@@ -228,13 +217,13 @@ part_tu03_kable <- kable(part_Activity_year_measures, caption = "Change in Parti
 kable_styling(part_tu03_kable, full_width = T, latex_options = c("hold_position"))
 ```
 
-It is immediately clear that the most compelling change out of the 17 activity groups over the period is in *Caring for & Helping Non-household (NonHH) Members* (tu04).
+It is immediately clear that the most compelling change out of the 17 activity groups over the period is in *Caring for & Helping Non-household (Non-HH) Members* represented by `tu04` in the data.
 
 ```{r Best Subsets, include=FALSE, cache=TRUE}
 best_subsets <- regsubsets(part_tu04~TUYEAR + TESEX + PEEDUCA + PEHSPNON + PTDTRACE + TEAGE + TELFS + TRCHILDNUM + TRHOLIDAY + TRSPPRES, data = Data_minus_columns, nvmax = 3, force.in = c(1))
 ```
 
-When fitting a linear model, the method of best subsets, with Year forced in, tells us that the most significant variables to predict the proportion of American's spending time *Caring for & Helping Nonhousehold (NonHH) Members* is **Sex** and **Number of Household Children**. A linear model is not sufficient to accurately predict tu04 participation, however it does give a good idea as to what is causing the change of the period 2003-2017.
+When fitting a linear model, the method of best subsets with *Year* forced in as a feature tells us that the most significant variables to predict the proportion of American's spending time *Caring for & Helping Nonhousehold (NonHH) Members* are *Sex* and *Number of Household Children*. A linear model is not sufficient to accurately predict `tu04` participation, however it does give a good idea as to what is causing the change over the period 2003 to 2017.
 
 ```{r part_tu04 Summary Model, message=FALSE, echo=FALSE, warning=FALSE, cache=TRUE}
 n1 <- nrow(part_weighted_means_data)
@@ -256,7 +245,6 @@ part_tu04_summary_plot <- ggplot(part_weighted_means_data, aes(x=TUYEAR, y=part_
 
 ```{r Sex Weighted Means, echo=FALSE, message=FALSE, cache=TRUE}
 Data_minus_columns_year_sex_grouped <- Data_minus_columns %>% group_by(TUYEAR, TESEX)
-
 sex_weighted_means_data <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
 for (i in 1:9){
   sex_weighted_means_data <- full_join(sex_weighted_means_data, summarise_at(Data_minus_columns_year_sex_grouped, vars((paste0("tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -264,7 +252,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   sex_weighted_means_data <- full_join(sex_weighted_means_data, summarise_at(Data_minus_columns_year_sex_grouped, vars((paste0("tu", i))), funs(weighted.mean(., TUFNWGTP))))
 }
-
 part_sex_weighted_means_data <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
 for (i in 1:9){
   part_sex_weighted_means_data <- full_join(part_sex_weighted_means_data, summarise_at(Data_minus_columns_year_sex_grouped, vars((paste0("part_tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -303,7 +290,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   sex_weighted_means_TRCHILDNUM <- full_join(sex_weighted_means_TRCHILDNUM, summarise_at(Data_minus_columns_year_sex_grouped, vars(TRCHILDNUM), funs(weighted.mean(., TUFNWGTP))))
 }
-
 part_sex_weighted_means_TRCHILDNUM <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
 for (i in 1:9){
   part_sex_weighted_means_TRCHILDNUM <- full_join(part_sex_weighted_means_TRCHILDNUM, summarise_at(Data_minus_columns_year_sex_grouped, vars(TRCHILDNUM), funs(weighted.mean(., TUFNWGTP))))
@@ -311,7 +297,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   part_sex_weighted_means_TRCHILDNUM <- full_join(part_sex_weighted_means_TRCHILDNUM, summarise_at(Data_minus_columns_year_sex_grouped, vars(TRCHILDNUM), funs(weighted.mean(., TUFNWGTP))))
 }
-
 part_tu04_sex_TRCHILDNUM_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYEAR, y=part_tu04)) +
   geom_bar(data=part_sex_weighted_means_TRCHILDNUM, aes(x=as.numeric(as.character(TUYEAR)), y=TRCHILDNUM, fill=TESEX), stat="identity", position = "dodge", width = 0.8, alpha = 0.3) +
   geom_smooth(method = "lm", data=part_sex_weighted_means_TRCHILDNUM, aes(x=as.numeric(as.character(TUYEAR)), y=TRCHILDNUM, col=TESEX), se=FALSE, linetype="dashed", size=1.5) +
@@ -323,12 +308,11 @@ part_tu04_sex_TRCHILDNUM_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYE
 ```
 
 ```{r Suitability of the model, echo=FALSE, cache=TRUE}
- part_tu04_summary_model_anova <- glm(part_tu04 ~ ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data, family = quasi(link = "log", variance = "mu^2"),
-                              mustart = rep(5, n2))
+ part_tu04_summary_model_anova <- glm(part_tu04 ~ ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(5, n2))
 ANOVA_for_sex <- anova(part_tu04_summary_model_anova, part_tu04_sex_model, test="F")
 ```
 
-The continuous activity data is non-negative and non-linear. Therefore a suitable model, using **Year** and **Sex** as explanatory variables, is a natural cubic spline GLM with multiplicative errors and log link. An F test shows this model is a significant improvement over the same model which does not use **Sex** as a variable, confirming the belief that is has a significant effect on participation in caring for & helping nonhousehold members.
+The non-negative, non-linear nature of the continuous activity data allows for a suitable model using *Year* and *Sex* as explanatory variables to be fitted. The model used here is a natural cubic spline GLM with multiplicative errors and log link. An $F$-test shows this model is a significant improvement over the same model which does not use *Sex* as a variable, confirming the belief that is has a significant effect on participation in caring for & helping non-household members.
 
 The plot below is a graphical interpretation of the model, built on the training data, with the average number of household children for each group of the population displayed as **bars**.
 
@@ -347,7 +331,6 @@ lm_p_value <- pt(Year_t, part_tu04_sex_linear_model$df, lower=TRUE)
 #note we have only 1439 respondents with TRCHILDNUM>4 so we set these to 4 so that the algorithm converges.
 Data_minus_columns_year_sex_child_grouped <- Data_minus_columns
 Data_minus_columns_year_sex_child_grouped <- mutate(Data_minus_columns_year_sex_child_grouped, TRCHILDNUM = ifelse(TRCHILDNUM >4, 4, TRCHILDNUM)) %>% group_by(TUYEAR, TESEX, TRCHILDNUM)
-
 sex_child_weighted_means_data <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F")),  TRCHILDNUM = 0:4))
 for (i in 1:9){
   sex_child_weighted_means_data <- full_join(sex_child_weighted_means_data, summarise_at(Data_minus_columns_year_sex_child_grouped, vars((paste0("tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -355,7 +338,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   sex_child_weighted_means_data <- full_join(sex_child_weighted_means_data, summarise_at(Data_minus_columns_year_sex_child_grouped, vars((paste0("tu", i))), funs(weighted.mean(., TUFNWGTP))))
 }
-
 part_sex_child_weighted_means_data <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F")),  TRCHILDNUM = 0:4))
 for (i in 1:9){
   part_sex_child_weighted_means_data <- full_join(part_sex_child_weighted_means_data, summarise_at(Data_minus_columns_year_sex_child_grouped, vars((paste0("part_tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -363,7 +345,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   part_sex_child_weighted_means_data <- full_join(part_sex_child_weighted_means_data, summarise_at(Data_minus_columns_year_sex_child_grouped, vars((paste0("part_tu", i))), funs(weighted.mean(., TUFNWGTP))))
 }
-
 n3 <- nrow(part_sex_child_weighted_means_data)
 part_tu04_sex_child_model <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_child_weighted_means_data,
                           family = quasi(link = "log", variance = "mu^2"),
@@ -374,7 +355,7 @@ part_tu04_sex_child_model <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(
 sex_child_summary_for_t_test <- summary(part_tu04_sex_child_model)
 sex_child_p_value <- coefficients(sex_child_summary_for_t_test)[1,4]
 ```
-The key observation is that, as the table suggested, over the period the participation in caring for & helping non-household members has decreased for both men and women. Building a linear model using **Sex** and **Year** and performing a t-test confirms this. There also appears to be a link between participation in caring for & helping non-household members and the number of household children. Updating the spline curve model to include the number of household children and then again testing this hypothesis with a t-test confirms this is the case. Looking at the graph, fluctuations in the average number of household children, on the whole seem to be followed by but if we check the correlations between them, they show this link is fairly weak (0.65 for Men and 0.49 for Women), suggesting there must be further reasons for this change; possibly not measured in this dataset.
+The key observation is that, as the table suggested, over the period the participation in caring for & helping non-household members has decreased for both men and women. Building a linear model using *Sex* and *Year* and performing a $t$-test confirms this. There also appears to be a link between participation in caring for & helping non-household members and the number of household children. Updating the spline curve model to include the number of household children and then again testing this hypothesis with a t-test confirms this is the case. Looking at the graph, fluctuations in the average number of household children, on the whole seem to be followed by but if we check the correlations between them, they show this link is fairly weak (0.65 for Men and 0.49 for Women), suggesting there must be further reasons for this change; possibly not measured in this dataset.
 
 ## Validation
 
@@ -399,7 +380,6 @@ Data_minus_columns_validation <- select(Data_minus_columns_validation, -one_of("
 
 ```{r Sex Weighted Means Validation, echo=FALSE, message=FALSE, cache=TRUE}
 Data_minus_columns_year_sex_grouped_validation <- Data_minus_columns_validation %>% group_by(TUYEAR, TESEX)
-
 sex_weighted_means_data_validation <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
 for (i in 1:9){
   sex_weighted_means_data_validation <- full_join(sex_weighted_means_data_validation, summarise_at(Data_minus_columns_year_sex_grouped_validation, vars((paste0("tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -407,7 +387,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   sex_weighted_means_data_validation <- full_join(sex_weighted_means_data_validation, summarise_at(Data_minus_columns_year_sex_grouped_validation, vars((paste0("tu", i))), funs(weighted.mean(., TUFNWGTP))))
 }
-
 part_sex_weighted_means_data_validation <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
 for (i in 1:9){
   part_sex_weighted_means_data_validation <- full_join(part_sex_weighted_means_data_validation, summarise_at(Data_minus_columns_year_sex_grouped_validation, vars((paste0("part_tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -424,7 +403,7 @@ Year_t_validation <- coefficients(part_tu04_sex_linear_model_summary_validation)
 lm_p_value_validation <- pt(Year_t_validation, part_tu04_sex_linear_model_validation$df, lower=TRUE)
 ```
 
-As with EDA, but this time formally, a linear model is built using **Sex** and **Year** and a t-test performed. It gives a p-value < 0.05. This means there is sufficient evidence to conclude that the proportion of American's who participate in caring for & helping non-household members has decreased over the period 2003-2017.
+As with EDA, but this time formally, a linear model is built using *Sex* and *Year* and a $t$-test performed. It gives $a$ p-value $< 0.05$. This means there is sufficient evidence to conclude that the proportion of American's who participate in caring for & helping non-household members has decreased over the period 2003-2017.
 
 ```{r part_tu04 Sex Model Validation, message=FALSE, echo=FALSE, warning=FALSE, cache=TRUE}
 n2_validation <- nrow(part_sex_weighted_means_data_validation)
@@ -448,7 +427,6 @@ The initial thoughts about the link with number of household children, from the 
 ```{r Adding TRCHILDNUM to model Validation, echo=FALSE, message=FALSE, cache=TRUE}
 Data_minus_columns_year_sex_child_grouped_validation <- Data_minus_columns_validation
 Data_minus_columns_year_sex_child_grouped_validation <- mutate(Data_minus_columns_year_sex_child_grouped_validation, TRCHILDNUM = ifelse(TRCHILDNUM >4, 4, TRCHILDNUM)) %>% group_by(TUYEAR, TESEX, TRCHILDNUM)
-
 sex_child_weighted_means_data_validation <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F")),  TRCHILDNUM = 0:4))
 for (i in 1:9){
   sex_child_weighted_means_data_validation <- full_join(sex_child_weighted_means_data_validation, summarise_at(Data_minus_columns_year_sex_child_grouped_validation, vars((paste0("tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -456,7 +434,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   sex_child_weighted_means_data_validation <- full_join(sex_child_weighted_means_data_validation, summarise_at(Data_minus_columns_year_sex_child_grouped_validation, vars((paste0("tu", i))), funs(weighted.mean(., TUFNWGTP))))
 }
-
 part_sex_child_weighted_means_data_validation <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F")),  TRCHILDNUM = 0:4))
 for (i in 1:9){
   part_sex_child_weighted_means_data_validation <- full_join(part_sex_child_weighted_means_data_validation, summarise_at(Data_minus_columns_year_sex_child_grouped_validation, vars((paste0("part_tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -464,7 +441,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   part_sex_child_weighted_means_data_validation <- full_join(part_sex_child_weighted_means_data_validation, summarise_at(Data_minus_columns_year_sex_child_grouped_validation, vars((paste0("part_tu", i))), funs(weighted.mean(., TUFNWGTP))))
 }
-
 n3_validation <- nrow(part_sex_child_weighted_means_data_validation)
 part_tu04_sex_child_model_validation <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_child_weighted_means_data_validation,
                           family = quasi(link = "log", variance = "mu^2"),
@@ -476,7 +452,7 @@ sex_child_summary_for_t_test_validation <- summary(part_tu04_sex_child_model_val
 sex_child_p_value_validation <- coefficients(sex_child_summary_for_t_test_validation)[1,4]
 ```
 
-With a p-value << 0.05, this test confirms this belief in the validation data.
+With a $p$-value << 0.05, this test confirms this belief in the validation data.
 
 ```{r Plotting Data Tidying, echo=FALSE, message=FALSE, cache=TRUE}
 #remove full time vs part time as has -1
@@ -499,7 +475,6 @@ Data_minus_columns_plotting <- select(Data_minus_columns_plotting, -one_of("TEHR
 
 ```{r Sex Weighted Means Plotting, echo=FALSE, message=FALSE, cache=TRUE}
 Data_minus_columns_year_sex_grouped_plotting <- Data_minus_columns_plotting %>% group_by(TUYEAR, TESEX)
-
 sex_weighted_means_data_plotting <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
 for (i in 1:9){
   sex_weighted_means_data_plotting <- full_join(sex_weighted_means_data_plotting, summarise_at(Data_minus_columns_year_sex_grouped_plotting, vars((paste0("tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -507,7 +482,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   sex_weighted_means_data_plotting <- full_join(sex_weighted_means_data_plotting, summarise_at(Data_minus_columns_year_sex_grouped_plotting, vars((paste0("tu", i))), funs(weighted.mean(., TUFNWGTP))))
 }
-
 part_sex_weighted_means_data_plotting <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
 for (i in 1:9){
   part_sex_weighted_means_data_plotting <- full_join(part_sex_weighted_means_data_plotting, summarise_at(Data_minus_columns_year_sex_grouped_plotting, vars((paste0("part_tu0", i))), funs(weighted.mean(., TUFNWGTP))))
@@ -538,7 +512,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   sex_weighted_means_TRCHILDNUM_plotting <- full_join(sex_weighted_means_TRCHILDNUM_plotting, summarise_at(Data_minus_columns_year_sex_grouped_plotting, vars(TRCHILDNUM), funs(weighted.mean(., TUFNWGTP))))
 }
-
 part_sex_weighted_means_TRCHILDNUM_plotting <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017), TESEX=as.factor(c("M", "F"))))
 for (i in 1:9){
   part_sex_weighted_means_TRCHILDNUM_plotting <- full_join(part_sex_weighted_means_TRCHILDNUM_plotting, summarise_at(Data_minus_columns_year_sex_grouped_plotting, vars(TRCHILDNUM), funs(weighted.mean(., TUFNWGTP))))
@@ -546,7 +519,6 @@ for (i in 1:9){
 for (i in c(10:16, 18)){
   part_sex_weighted_means_TRCHILDNUM_plotting <- full_join(part_sex_weighted_means_TRCHILDNUM_plotting, summarise_at(Data_minus_columns_year_sex_grouped_plotting, vars(TRCHILDNUM), funs(weighted.mean(., TUFNWGTP))))
 }
-
 part_tu04_sex_TRCHILDNUM_plot_plotting <- ggplot(part_sex_weighted_means_data_plotting, aes(x=TUYEAR, y=part_tu04)) +
   geom_bar(data=part_sex_weighted_means_TRCHILDNUM_plotting, aes(x=as.numeric(as.character(TUYEAR)), y=TRCHILDNUM, fill=TESEX), stat="identity", position = "dodge", width = 0.8, alpha = 0.3) +
   geom_smooth(method = "lm", data=part_sex_weighted_means_TRCHILDNUM_plotting, aes(x=as.numeric(as.character(TUYEAR)), y=TRCHILDNUM, col=TESEX), se=FALSE, linetype="dashed", size=1.5) +
@@ -557,6 +529,8 @@ part_tu04_sex_TRCHILDNUM_plot_plotting <- ggplot(part_sex_weighted_means_data_pl
   scale_x_continuous(breaks = seq(2003,2017,2)) + xlab("Year") + ylab("Average number of children") + labs(color="Sex", fill="Sex") + theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 ```
 
+We have now verified that the conclusions are correct: the percentage of American's who partake in caring for & helping non-household members has decreased over the period from 2003 to 2017. There also seems to be a link between the number of children in the household and the participation percentage.
+
 ```{r part_tu04 Sex Plot with Number of Children Plotting, message=FALSE, echo=FALSE, cache=TRUE}
 print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 ```
@@ -566,25 +540,21 @@ print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 ```{r, echo=FALSE, cache=TRUE}
 # Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
 ATUS.SUM$TUBIRTHYEAR <- ATUS.SUM$TUYEAR - ATUS.SUM$TEAGE
-ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation", 
+ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation",
     ifelse(ATUS.SUM$TUBIRTHYEAR < 1965, "Baby Boomers",
         ifelse(ATUS.SUM$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
-
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
 ATUS.CPS.States <- select(ATUS.CPS, TUCASEID, GESTFIPS, GEDIV, GEREG)
 ATUS.CPS.States <- distinct(ATUS.CPS.States)
-
 # Create a data frame from relevant variables within ATUS Summary
 Gender.Roles.Data <- select(ATUS.SUM, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
-
-# Create variables to be added to a data frame with relevant gender activities 
+# Create variables to be added to a data frame with relevant gender activities
 Working <- ATUS.SUM[, grep("^t05", names(ATUS.SUM))]
 House.Maintenance <- ATUS.SUM[, grep("^t0204", names(ATUS.SUM))]
 Vehicle.Maintenance <- ATUS.SUM[, grep("^t0207", names(ATUS.SUM))]
 Housework <- ATUS.SUM[, grep("^t0201", names(ATUS.SUM))]
 Food.Preparation <- ATUS.SUM[, grep("^t0202", names(ATUS.SUM))] + ATUS.SUM$t070101 + ATUS.SUM$t070103
 Childcare <- ATUS.SUM[, grep("^t03", names(ATUS.SUM))]
-
 # Add in relevant categories
 Gender.Roles.Data$Working <- rowSums(Working)
 Gender.Roles.Data$House.Maintenance <- rowSums(House.Maintenance)
@@ -592,10 +562,8 @@ Gender.Roles.Data$Vehicle.Maintenance <- rowSums(Vehicle.Maintenance)
 Gender.Roles.Data$Housework <- rowSums(Housework)
 Gender.Roles.Data$Food.Preparation <- rowSums(Food.Preparation)
 Gender.Roles.Data$Childcare <- rowSums(select(Childcare, t030101:t030399))
-
 # Join this dataset with the CPS states info by unique id number of participant
 Gender.Roles.Data <- inner_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASEID')
-
 Gender.Roles.Differences <- data.frame('Year' = c(), 'Month' = c(), 'Variable' = c(), 'Generation' = c(), 'Difference' = c())
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
     Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
@@ -622,7 +590,6 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
         }
     }
 }
-
 # Make a vector containing each year as a Date object to be used in generating splines for the models
 Dates = c()
 for (i in 4:17) {
@@ -632,7 +599,6 @@ for (i in 4:17) {
         Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
     }
 }
-
 fit.models.and.plot <- function(Data, variable, mu) {
     # Start building models for the data
     n <- nrow(Data)
@@ -645,13 +611,10 @@ fit.models.and.plot <- function(Data, variable, mu) {
     model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
     # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
     # Use same method as in lab 5 to plot them
-
     # change the model number in the predict functions below for different models
     male.prediction <- predict.glm(model5, newdata = filter(Data, TESEX == 'M'), se = TRUE, type = "response")
     female.prediction <- predict.glm(model5, newdata = filter(Data, TESEX == 'F'), se = TRUE, type = "response")
-
     df <- data.frame(age = c(filter(Data, TESEX == 'M')$TEAGE, filter(Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Data, TESEX == 'M')$TUDIARYDATE, filter(Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Data, TESEX == 'M')$TESEX, filter(Data, TESEX == 'F')$TESEX), region = c(filter(Data, TESEX == 'M')$GEREG, filter(Data, TESEX == 'F')$GEREG), generation = c(filter(Data, TESEX == "M")$TUGENERATION, filter(Data, TESEX == "F")$TUGENERATION))
-
     if (variable == 'Working' | variable == 'Childcare') {
         print(ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) +
         geom_line() +
