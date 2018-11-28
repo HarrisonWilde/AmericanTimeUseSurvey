@@ -4,6 +4,7 @@ author: "Dan"
 date: "20 November 2018"
 geometry: left=2cm, right=2cm, top=2cm, bottom=2cm
 output: pdf_document
+fontsize: 11pt
 link-citations: yes
 bibliography: Final-Report-References.bib
 csl: ieee.csl
@@ -16,7 +17,7 @@ csl: ieee.csl
 
 # Preparing the Environment
 
-(Please note that the `tidy` function in R-Markdown does not work correctly, and usually destroys the indentation / formatting of code which can lead to it being unreadable especially in code blocks as long as these, it is suggested for the reader's sanity that they look at the code in the .rmd file rather than the pdf but this choice can only be left to the reader)
+(Please note that the `tidy` function in R-Markdown does not work correctly, and usually destroys the indentation / formatting of code which can lead to it being unreadable especially in code blocks as long as these, it is suggested for the reader's sanity that they look at the code in the `.rmd` file rather than the pdf but this choice can only be left to the reader)
 
 First, load all of the required packages and install any that are missing.
 
