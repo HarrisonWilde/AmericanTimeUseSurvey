@@ -12,6 +12,7 @@ csl: ieee.csl
 link-citations: yes
 header-includes:
    - \usepackage{animate}
+   - \usepackage{indentfirst}
 ---
 
 # Introduction
@@ -474,23 +475,52 @@ For each of the activities, a suitable generalized linear model was developed us
 The plots below show the change in working patterns between three different generations. The *Silent Generation* have been excluded from this plot as, by 2010, the youngest of this generation will be 65. At this age, most will have retired and as such the plot is not very informative. Furthermore, the same scale is used for each graph (for purpose of easier comparison), so this affects the quality of comparison between the more informative generations.
 
 ```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=9, fig.align='c'}
-model1 <- glm(weighted.Working ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(250, n))
-model2 <- update(model1, . ~ . + TESEX)
-# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
-model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-# model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-# Use same method as in lab 5 to plot them
-# change the model number in the predict functions below for different models
-male.prediction <- predict(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
-female.prediction <- predict(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
-df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
-model3_plot <- ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) +
-geom_line() +
-geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = "Predicted Working (minutes)", title = "Trends in working for each generation", subtitle = "Data Source: ATUS Survey") + scale_colour_discrete(name="Sex")
-print(model3_plot)
-summary(model3)
+Gender.Roles.Plotting <- filter(Gender.Roles.Data, month(TUDIARYDATE) != 7)
+fit.models.and.plot <- function(Data, variable, mu) {
+    # Start building models for the data
+    n <- nrow(Data)
+    # model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+    model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(mu, n))
+    model2 <- update(model1, . ~ . + TESEX)
+    # model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
+    model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+    # Use same method as in lab 5 to plot them
+    # change the model number in the predict functions below for different models
+    male.prediction <- predict.glm(model5, newdata = filter(Data, TESEX == 'M'), se = TRUE, type = "response")
+    female.prediction <- predict.glm(model5, newdata = filter(Data, TESEX == 'F'), se = TRUE, type = "response")
+    df <- data.frame(age = c(filter(Data, TESEX == 'M')$TEAGE, filter(Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Data, TESEX == 'M')$TUDIARYDATE, filter(Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Data, TESEX == 'M')$TESEX, filter(Data, TESEX == 'F')$TESEX), region = c(filter(Data, TESEX == 'M')$GEREG, filter(Data, TESEX == 'F')$GEREG), generation = c(filter(Data, TESEX == "M")$TUGENERATION, filter(Data, TESEX == "F")$TUGENERATION))
+    if (variable == 'Working' | variable == 'Childcare') {
+        print(ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) + 
+        geom_line() + 
+        geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey"))
+    } else {
+        print(ggplot(df, aes(x=date, y=prediction, colour=type)) + 
+        geom_line() + 
+        geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey"))
+    }
+}
+fit.models.and.plot(Gender.Roles.Plotting, 'Working', 250)
+
+# model1 <- glm(weighted.Working ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(250, n))
+# model2 <- update(model1, . ~ . + TESEX)
+# # model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
+# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+# model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+# model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+# # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+# # Use same method as in lab 5 to plot them
+# # change the model number in the predict functions below for different models
+# male.prediction <- predict(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
+# female.prediction <- predict(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
+# df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
+# model3_plot <- ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) +
+# geom_line() +
+# geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = "Predicted Working (minutes)", title = "Trends in working for each generation", subtitle = "Data Source: ATUS Survey") + scale_colour_discrete(name="Sex")
+# print(model3_plot)
+# summary(model3)
 ```
 
 ### House Maintenance and Vehicle Maintenance
@@ -499,46 +529,33 @@ For both of these variables, it was decided that the participation rate was too 
 
 ### Housework
 
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=10, fig.align='c'}
-model1 <- glm(weighted.Housework ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(50, n))
-model2 <- update(model1, . ~ . + TESEX)
-# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
-model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-# model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-# Use same method as in lab 5 to plot them
-# change the model number in the predict functions below for different models
-male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
-female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
-df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
-model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) +
-geom_line() +
-geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = "Predicted Housework (minutes)", title = "Trends in housework for each generation", subtitle = "Data Source: ATUS Survey") + scale_colour_discrete(name="Sex")
-print(model3_plot)
+```{r, echo=FALSE, warning=FALSE, fig.height=4, fig.width=10, fig.align='c'}
+fit.models.and.plot(Gender.Roles.Plotting, 'Housework', 50)
+
+# model1 <- glm(weighted.Housework ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(50, n))
+# model2 <- update(model1, . ~ . + TESEX)
+# # model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
+# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+# model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+# model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+# # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
+# # Use same method as in lab 5 to plot them
+# # change the model number in the predict functions below for different models
+# male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
+# female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
+# df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
+# model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) +
+# geom_line() +
+# geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = "Predicted Housework (minutes)", title = "Trends in housework for each generation", subtitle = "Data Source: ATUS Survey") + scale_colour_discrete(name="Sex")
+# print(model3_plot)
 ```
 
 The graphs above show that for all generations, except for *Millennials*, there has been a decrease in the gap between men and women. This is as a result of men spending more time and women spending less time on housework, although the decrease for women is sharper than the increase for men. This trend is reflected strongest in *Generation X*, the second youngest generation, however, there is also strong evidence for this trend in the *Silent Generation* despite the slight rise in women in 2016. On the other hand, the gap seems to have increased slightly for *Millennials* - both sexes are increasing the amount of time spent on housework, but the increase is not as severe for men. Notably, *Millennials* also spend substantially less time doing housework than the other generations, with the highest point being around 45 minutes per day (women in 2016), compared to around 62 in *Baby Boomers* and *Generation X* and 72 in the *Silent Generation*. Therefore, whilst the gap is increasing for *Millennials*, it is still smaller than all of the other generations at around 25 minutes. Comparatively, the *Silent Generation's* gap started at over 50 minutes in 2003 and has decreased to just under 45.
 
 ### Cooking
 
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=10, fig.align='c'}
-model1 <- glm(weighted.Food.Preparation ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(60, n))
-model2 <- update(model1, . ~ . + TESEX)
-# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
-model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-# model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-# Use same method as in lab 5 to plot them
-# change the model number in the predict functions below for different models
-male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
-female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
-df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
-model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) +
-geom_line() +
-geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = "Predicted Cooking (minutes)", title = "Trends in housework for each generation", subtitle = "Data Source: ATUS Survey") + scale_colour_discrete(name="Sex")
-print(model3_plot)
+```{r, echo=FALSE, warning=FALSE, fig.height=4, fig.width=10, fig.align='c'}
+fit.models.and.plot(Gender.Roles.Plotting, 'Food.Preparation', 60)
 ```
 
 The graphs above show a very similar trend to `Housework` in the sense that the gap is decreasing and that all generations, apart from *Millennials* spend a similar amount of time in general on this activity. However, the difference with this activity is that for *Baby Boomers* and *Generation X*, women are actually spending more time on this activity than they were previously - the decrease in the gap is as a result of a sharper increase for men. For *Millennials*, this is not true: both sexes are spending more time on this activity but the increase for both is at an equal rate and so the gap is remaining equal. The *Silent Generation* is the generation showing the biggest decrease in the gap between sexes; this is due to the decrease for women and an increase for men, although this generation started off with the highest values for both sexes.
@@ -547,23 +564,8 @@ The graphs above show a very similar trend to `Housework` in the sense that the 
 
 Again for similar reasons to working, the *Silent Generation* have been excluded from this. Most are unlikely to have any household children.
 
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=10, fig.align='c'}
-model1 <- glm(weighted.Childcare ~ ns(TUDIARYDATE), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(50, n))
-model2 <- update(model1, . ~ . + TESEX)
-# model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
-model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-# model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-# Use same method as in lab 5 to plot them
-# change the model number in the predict functions below for different models
-male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
-female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
-df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
-model3_plot <- ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) +
-geom_line() +
-geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = "Predicted Childcare (minutes)", title = "Trends in childcare for each generation", subtitle = "Data Source: ATUS Survey") + scale_colour_discrete(name="Sex")
-print(model3_plot)
+```{r, echo=FALSE, warning=FALSE, fig.height=4, fig.width=10, fig.align='c'}
+fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
 ```
 
 These graphs show perhaps the greatest change in gender roles. The data for *Baby Boomers* and the *Silent Generation* shows very little, most likely as the variables included in childcare relate only to caring for household children, where a child is defined as someone below the age of 18. It is unlikely that many people within these generations would have children living with them at this age (in fact checking the data confirms that, in 2017, only 9% met this criteria). Furthermore at this age, their children are likely to be older and require less constant care as they become more independent. Therefore, the other generations, *Millennials* and *Generation X*, reflect more interesting trends. For reasons similar to the older generations, the drop off in childcare at the end of *Generation X* can likely be explained as children mature; however, the drop off for women is sharper than it is for men, leading to a convergence in the lines. The gap has decreased substantially, from 50 minutes per day in 2003 to less than half that, around 20 minutes in 2017. This could further be attributed to the decrease in working time for this generation, noted above. The *Millennials* on the other hand relfect an increase year on year for childcaring activities. Whilst the gap increases slightly over time, it doesn't ever reach a similar point to that of *Generation X*, with the biggest difference being around 40% compared to that of 60%.
