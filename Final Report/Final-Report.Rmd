@@ -371,8 +371,8 @@ ATUS.SUM$TUMONTH <- as.numeric(substr(ATUS.SUM$TUCASEID, 5, 6))
 ATUS.SUM$TUBIRTHYEAR <- ATUS.SUM$TUYEAR - ATUS.SUM$TEAGE
 #Classify Generations
 ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation",
-                                ifelse(ATUS.SUM$TUBIRTHYEAR < 1965, "Baby Boomers",
-                                       ifelse(ATUS.SUM$TUBIRTHYEAR < 1981, "Generation X", "Millenials")))
+    ifelse(ATUS.SUM$TUBIRTHYEAR < 1965, "Baby Boomers",
+        ifelse(ATUS.SUM$TUBIRTHYEAR < 1981, "Generation X", "Millenials")))
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
 ATUS.CPS.States <- select(ATUS.CPS, TUCASEID, GESTFIPS, GEDIV, GEREG)
 ATUS.CPS.States <- distinct(ATUS.CPS.States)
@@ -435,11 +435,11 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
 
 Dates <- c()
 for(i in 4:17){
-  if(i < 10){
-  Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
-  } else{
-    Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
-  }
+    if(i < 10){
+        Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
+    } else {
+        Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
+    }
 }
 n <- nrow(Gender.Roles.Data)
 
