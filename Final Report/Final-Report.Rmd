@@ -1,5 +1,5 @@
 ---
-title: "**How Americans’ Time-Use Patterns Have Changed From 2003 to 2017**"
+title: "**How Americans’ Time Use Patterns Have Changed From 2003 to 2017**"
 subtitle: "Group July"
 date: "26 November 2018"
 geometry: left=2cm, right=2cm, top=2cm, bottom=2cm
@@ -17,9 +17,9 @@ header-includes:
 
 # Introduction
 
-The aim of this report is to discover how Americans' time-use patterns have changed over the last 15 years through discovering and analysing long-term trends within this period. The datasets [@atusdatasets] used to tackle this comprise some of the results of the American Time Use Survey (ATUS) [@ATUS]. ATUS respondents were interviewed once about how they spent their time on the previous day, where they were, and whom they were with. The survey records the time spent on 431 different activities that are grouped into 17 different categories. In the analysis these categories will often be referred to by a variable beginning with `tu` followed by a two-digit *category number*. The meaning of each category number and identifications of the rest of the variables can be found in the lexicon and data dictionary files which are obtained from the [ATUS website](https://www.bls.gov/tus/lexiconnoex0317.pdf).
+The aim of this report is to discover how Americans' time use patterns have changed over the last 15 years through discovering and analysing long-term trends within this period. The datasets [@atusdatasets] used to tackle this comprise some of the results of the American Time Use Survey (ATUS) [@ATUS]. ATUS respondents were interviewed once about how they spent their time on the previous day, where they were, and whom they were with. The survey records the time spent on 431 different activities that are grouped into 17 different categories. In the analysis these categories will often be referred to by a variable beginning with `tu` followed by a two-digit *category number*. The meaning of each category number and identifications of the rest of the variables can be found in the lexicon and data dictionary files which are obtained from the [ATUS website](https://www.bls.gov/tus/lexiconnoex0317.pdf).
 
-The [Bureau of Labor Statistics website](https://www.bls.gov/tus/charts.htm) provides a number of simple charts looking at the 2017 annual average for these categories. This report provides a more definitive conclusion on how time-use patterns changed over the period, evidenced with statistical investigation of the data. The findings explain in depth where some of the biggest fluctuations are and briefly note possible reasons for this. Limitations to the analysis are noted where appropriate and these must be taken into account when performing any further analysis or summaries; mentioned alongside any conclusions.
+The [Bureau of Labor Statistics website](https://www.bls.gov/tus/charts.htm) provides a number of simple charts looking at the 2017 annual average for these categories. This report provides a more definitive conclusion on how time use patterns changed over the period, evidenced with statistical investigation of the data. The findings explain in depth where some of the biggest fluctuations are and briefly note possible reasons for this. Limitations to the analysis are noted where appropriate and these must be taken into account when performing any further analysis or summaries; mentioned alongside any conclusions.
 
 Usually when analysing data, statisticians will split the dataset into training data (around 90%) and validation data (around 10%). This ensures that any exploratory data analysis (EDA) conclusions from the training data can be verified using the remaining data. Whilst the analysis performed for this report follows this technique, it splits the data approximately evenly. This is to ensure that seasonality does not cause incorrect rejections of hypotheses generated in the EDA. More specifically, EDA was performed on every other month which doesn't include July.
 
@@ -96,22 +96,21 @@ if (!require("rgeos")){
 ## Exploratory Data Analysis
 
 ```{r Import Data, echo=FALSE, message=FALSE}
-ATUS_dataset <- import("atussum_0317.csv", setclass = "tibble")    # import raw summary data as TIBBLE
+ATUS.SUM <- import("atussum_0317.csv", setclass = "tibble")    # import raw summary data as TIBBLE
 ATUS.CPS <- import('atuscps_0317.csv', setclass = "tibble") # import CPS data as TIBBLE for geographical data use
 ```
 
 ```{r Tidying the Data, echo=FALSE, message=FALSE}
 # Check there are no other NA's other than those in format explained in the notes
-NA_check <- sum(is.na(ATUS_dataset))
+NA_check <- sum(is.na(ATUS.SUM))
 
 # Add date from respondent file and change Sex values to M and F instead of 1 and 2
-ATUS_dataset <- mutate(ATUS_dataset, TESEX = ifelse(TESEX == 1, "M", "F"))
+ATUS.SUM <- mutate(ATUS.SUM, TESEX = ifelse(TESEX == 1, "M", "F"))
 # Create a diary date column based off of the unique ID
-ATUS_dataset$TUDIARYDATE <- as.Date(paste0(substr(ATUS_dataset$TUCASEID, 1, 6), '01'), "%Y%m%d")
-
+ATUS.SUM$TUDIARYDATE <- as.Date(paste0(substr(ATUS.SUM$TUCASEID, 1, 6), '01'), "%Y%m%d")
 
 # A change of variable name in this period leads to missing values so we merge these 2 variables
-ATUS_dataset <- mutate(ATUS_dataset, Met_Status = as.factor(pmax(GEMETSTA, GTMETSTA)))
+ATUS_dataset <- mutate(ATUS.SUM, Met_Status = as.factor(pmax(GEMETSTA, GTMETSTA)))
 ATUS_dataset <- select(ATUS_dataset, -one_of(c("GEMETSTA", "GTMETSTA")))
 
 # Set suitable variables as factors
@@ -566,25 +565,25 @@ print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 
 ```{r, cache=TRUE, include=FALSE}
 # Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
-ATUS_dataset$TUBIRTHYEAR <- ATUS_dataset$TUYEAR - ATUS_dataset$TEAGE
-ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation", 
-    ifelse(ATUS_dataset$TUBIRTHYEAR < 1965, "Baby Boomers",
-        ifelse(ATUS_dataset$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
+ATUS.SUM$TUBIRTHYEAR <- ATUS.SUM$TUYEAR - ATUS.SUM$TEAGE
+ATUS.SUM$TUGENERATION <- ifelse(ATUS.SUM$TUBIRTHYEAR < 1946, "Silent Generation", 
+    ifelse(ATUS.SUM$TUBIRTHYEAR < 1965, "Baby Boomers",
+        ifelse(ATUS.SUM$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
 
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
 ATUS.CPS.States <- select(ATUS.CPS, TUCASEID, GESTFIPS, GEDIV, GEREG)
 ATUS.CPS.States <- distinct(ATUS.CPS.States)
 
 # Create a data frame from relevant variables within ATUS Summary
-Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
+Gender.Roles.Data <- select(ATUS.SUM, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
 
 # Create variables to be added to a data frame with relevant gender activities 
-Working <- ATUS_dataset[, grep("^t05", names(ATUS_dataset))]
-House.Maintenance <- ATUS_dataset[, grep("^t0204", names(ATUS_dataset))]
-Vehicle.Maintenance <- ATUS_dataset[, grep("^t0207", names(ATUS_dataset))]
-Housework <- ATUS_dataset[, grep("^t0201", names(ATUS_dataset))]
-Food.Preparation <- ATUS_dataset[, grep("^t0202", names(ATUS_dataset))] + ATUS_dataset$t070101 + ATUS_dataset$t070103
-Childcare <- ATUS_dataset[, grep("^t03", names(ATUS_dataset))]
+Working <- ATUS.SUM[, grep("^t05", names(ATUS.SUM))]
+House.Maintenance <- ATUS.SUM[, grep("^t0204", names(ATUS.SUM))]
+Vehicle.Maintenance <- ATUS.SUM[, grep("^t0207", names(ATUS.SUM))]
+Housework <- ATUS.SUM[, grep("^t0201", names(ATUS.SUM))]
+Food.Preparation <- ATUS.SUM[, grep("^t0202", names(ATUS.SUM))] + ATUS.SUM$t070101 + ATUS.SUM$t070103
+Childcare <- ATUS.SUM[, grep("^t03", names(ATUS.SUM))]
 
 # Add in relevant categories
 Gender.Roles.Data$Working <- rowSums(Working)
@@ -598,29 +597,23 @@ Gender.Roles.Data$Childcare <- rowSums(select(Childcare, t030101:t030399))
 Gender.Roles.Data <- inner_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASEID')
 
 Gender.Roles.Differences <- data.frame('Year' = c(), 'Month' = c(), 'Variable' = c(), 'Generation' = c(), 'Difference' = c())
-
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
     Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
     for (generation in c("Silent Generation", "Baby Boomers", "Generation X", "Millennials")) {
         for (year in unique(Gender.Roles.Data$TUYEAR)) {
             for (month in unique(month(Gender.Roles.Data$TUDIARYDATE))) {
                 for (sex in c("M", "F")) {
-
                     Filtered.Data <- filter(Gender.Roles.Data, TESEX == sex, TUYEAR == year, month(TUDIARYDATE) == month, TUGENERATION == generation)
                     bottom.sum <- sum(Filtered.Data$TUFNWGTP)
                     top.sum <- sum(Filtered.Data$TUFNWGTP * Filtered.Data[,variable])
                     weighted.values <- top.sum / bottom.sum
-
                     if (sex == 'M') m.weighted.values <- weighted.values
-
                     for (region in 1:4) {
-
                         Filtered.Regional.Data <- filter(Filtered.Data, GEREG == region)
                         bottom.sum <- sum(Filtered.Regional.Data$TUFNWGTP)
                         top.sum <- sum(Filtered.Regional.Data$TUFNWGTP * Filtered.Regional.Data[,variable])
                         weighted.regional.values <- top.sum / bottom.sum
-
-                        Gender.Roles.Data[Gender.Roles.Data$TESEX == sex & Gender.Roles.Data$TUYEAR == year & month(Gender.Roles.Data$TUDIARYDATE)` & Gender.Roles.Data$GEREG == region & Gender.Roles.Data$TUGENERATION == generation, paste0('weighted.', variable)] <- weighted.values
+                        Gender.Roles.Data[Gender.Roles.Data$TESEX == sex & Gender.Roles.Data$TUYEAR == year & month(Gender.Roles.Data$TUDIARYDATE) == month & Gender.Roles.Data$GEREG == region & Gender.Roles.Data$TUGENERATION == generation, paste0('weighted.', variable)] <- weighted.values
                     }
                 }
                 weighted.difference <- m.weighted.values - weighted.values
@@ -629,37 +622,8 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
         }
     }
 }
-```
 
-A major news topic in recent years has been the division between genders in terms of roles and responsibilities. This debate has been fueled by a new wave of feminism, as well as a number of different campaigns, including *'#MeToo'* and *'Times Up'*. Both of these movements aim at addressing commonplace sexual harassment and discrimination and empowering women to take control. Given this backdrop, it was decided that an interesting area of the ATUS data to focus on would be the change in time use for different genders. Specifically, areas of time use where pre-existing gender roles are present were examined.
-
-Talcott Parsons' **[input BibTex reference here]** view of gender roles, developed in the 1950s, compared traditional gender roles with more liberal alternatives. A simplified version of the strictly traditional view of gender roles is detailed below.
-
-```{r, echo=FALSE}
-Male.Activities <- c("Working", "House Maintenance", "Vehicle Maintenance")
-Female.Activities <- c("Housework", "Cooking", "Childcare")
-kable(data.frame(Male.Activities, Female.Activities), caption  = "Traditionalist Gender Actitivies", format = "latex", booktabs = T,  col.names = c("Male Activites", "Female Activities"), align = rep('c', 2)) %>% kable_styling(full_width = T, latex_options = "HOLD_position")
-```
-
-The liberal viewpoint discussed by Parsons suggests an equal balance of time for the genders in these roles. Whilst this study was developed over 50 years ago, a preliminary look at the data confirmed that, in 2003, a complete transition to the liberal viewpoint had not occurred. Therefore, it was decided to investigate whether the time use of these specific activities was heading to an equal split between the genders or whether it is stationary. Of course, it should be noted that 15 years is not a huge length of time to measure this sort of social change, as only a few sets of generations responses are recorded, however, it presents an interesting topic.
-
-Following, some initial exploration of the data, it was also decided that looking at different generations [insert reference here] presented a different look at the activities, with each generations spending different lengths of time on activities. Essentially, this provides a split in the data by age, but using generations provides a way of tracking a population over time and without having to arbitraily pick age categories. These generations are defined in the table below. A small number of participants fell outside of these ranges, however, these represented only a small number of participants and so were added to the next nearest generation (e.g. if a participant was born in 1998, they would be added to the *Millennials* generation).
-
-```{r, echo=FALSE}
-Generations <- c("Silent Generation", "Baby Boomers", "Generation X", "Millennials")
-Birth.Years <- c("1928 - 1945", "1946 - 1964", "1965 - 1980", "1981 - 1996")
-kable(data.frame(Generations,Birth.Years),format = "latex", caption = "Generations", booktabs = T, col.names = c("Generation", "Birth Years"), align = rep('c', 2)) %>% kable_styling(full_width = T)
-```
-
-For each of the activities, a suitable generalized linear model was developed using sex, year and generation as parameters. The values used to predict each model were constructed using the weighted mean formula provided in the *ATUS User's Guide*, available online in the ATUS Survey Documentation. Splines were added to the model for each year and graphical representations were produced.
-
-**For the generation classifications, it needs to reference** http://www.pewresearch.org/fact-tank/2018/03/01/millennials-overtake-baby-boomers/
-
-### Working
-
-The plots below show the change in working patterns between three different generations. The *Silent Generation* have been excluded from this plot as, by 2010, the youngest of this generation will be 65. At this age, most will have retired and as such the plot is not very informative. Furthermore, the same scale is used for each graph (for purpose of easier comparison), so this affects the quality of comparison between the more informative generations.
-
-```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=9, fig.align='c'}
+# Make a vector containing each year as a Date object to be used in generating splines for the models
 Dates = c()
 for (i in 4:17) {
     if (i < 10) {
@@ -668,8 +632,7 @@ for (i in 4:17) {
         Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
     }
 }
-Gender.Roles.Plotting <- filter(Gender.Roles.Data, month(TUDIARYDATE) != 7)
-Gender.Roles.Train <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 == 0)
+
 fit.models.and.plot <- function(Data, variable, mu) {
     # Start building models for the data
     n <- nrow(Data)
@@ -699,7 +662,39 @@ fit.models.and.plot <- function(Data, variable, mu) {
         geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey"))
     }
 }
-fit.models.and.plot(Gender.Roles.Train, 'Working', 250)
+Gender.Roles.Plotting <- filter(Gender.Roles.Data, month(TUDIARYDATE) != 7)
+```
+
+The discussion surrounding social division between genders in terms of roles and responsibilities has consistently been a major news topic in recent years. This debate has been fuelled by a new wave of feminism, as well as a number of different social media campaigns such as *'#MeToo'* and *'Times Up'*. Both of these movements aimed to address commonplace sexual harassment and discrimination, empowering women to take back control. Given this current social climate, it was decided that an interesting area of the ATUS data to focus on would be long-term changes in time use for different sexes. Specifically, areas of time use where pre-existing gender roles are present were examined.
+
+Talcott Parsons' [@10.2307/2085686] study on gender roles - published in the 1950s - compared traditional gender roles with more liberal alternatives. A simplified version of the strictly traditional view of gender roles is detailed in the table below.
+
+```{r, echo=FALSE}
+Male.Activities <- c("Working", "House Maintenance", "Vehicle Maintenance")
+Female.Activities <- c("Housework", "Cooking", "Childcare")
+kable(data.frame(Male.Activities, Female.Activities), caption  = "Traditionalist Gender Actitivies", format = "latex", booktabs = T,  col.names = c("Male Activites", "Female Activities"), align = rep('c', 2)) %>% kable_styling(full_width = T, latex_options = "HOLD_position")
+```
+
+The liberal viewpoint discussed by Parsons suggests an equal balance of time for the genders in these roles. Whilst this study was developed over 50 years ago, a preliminary look at the data confirmed that, in 2003, a complete transition to the liberal viewpoint had not occurred. Therefore, it was decided to investigate whether the time use of these specific activities was converging to equality or remaining stationary with noticeable differences between genders.
+
+Following some initial exploration of the data, it was also decided that looking at different generations [@generations] presented a different look at the activities, with each generations spending different lengths of time on activities. Essentially, this provides a split in the data by age, but using generations provides a way of tracking a population over time and without having to arbitrarily pick age categories. These generations are defined in the table below. A small number of participants fell outside of these ranges, however, these represented only a small number of participants and so were added to the next nearest generation (e.g. if a participant was born in 1998, they would be added to the *Millennials* generation).
+
+```{r, echo=FALSE}
+Generations <- c("Silent Generation", "Baby Boomers", "Generation X", "Millennials")
+Birth.Years <- c("1928 - 1945", "1946 - 1964", "1965 - 1980", "1981 - 1996")
+kable(data.frame(Generations,Birth.Years),format = "latex", caption = "Generations", booktabs = T, col.names = c("Generation", "Birth Years"), align = rep('c', 2)) %>% kable_styling(full_width = T)
+```
+
+For each of the activities, a suitable generalized linear model was developed using sex, year and generation as parameters. The values used to predict each model were constructed using the weighted mean formula provided in the *ATUS User's Guide*, available online in the ATUS Survey Documentation. Splines were added to the model for each year and graphical representations were produced.
+
+**For the generation classifications, it needs to reference** http://www.pewresearch.org/fact-tank/2018/03/01/millennials-overtake-baby-boomers/
+
+### Working
+
+The plots below show the change in working patterns between three different generations. The *Silent Generation* have been excluded from this plot as, by 2010, the youngest of this generation will be 65. At this age, most will have retired and as such the plot is not very informative. Furthermore, the same scale is used for each graph (for purpose of easier comparison), so this affects the quality of comparison between the more informative generations.
+
+```{r, echo=FALSE, warning=FALSE, cache=TRUE, fig.height=4, fig.width=9, fig.align='c'}
+fit.models.and.plot(Gender.Roles.Plotting, 'Working', 250)
 ```
 
 ### House Maintenance and Vehicle Maintenance
@@ -724,7 +719,7 @@ The graphs above show a very similar trend to `Housework` in the sense that the 
 
 ### Childcare
 
-Again for similar reasons to working, the *Silent Generation* have been excluded from this. Most are unlikely to have any household children.
+For similar reasons to working, the *Silent Generation* has been excluded from this section as most of the people in this age range are unlikely to have any household children.
 
 ```{r, echo=FALSE, warning=FALSE, fig.height=4, fig.width=10, fig.align='c'}
 fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
