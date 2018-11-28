@@ -4,6 +4,9 @@ author: "Dan"
 date: "20 November 2018"
 geometry: left=2cm, right=2cm, top=2cm, bottom=2cm
 output: pdf_document
+bibliography: Final-Report-References.bib
+csl: ieee.csl
+link-citations: yes
 ---
 
 ```{r Notes, echo=FALSE, message=FALSE}
@@ -11,6 +14,8 @@ output: pdf_document
 # - In the data -1 means blank, -2 means don't know, -3 means refused
 ```
 The packages required for the analysis are loaded and installed if required
+
+Load all of the required packages and install any that are missing.
 
 ```{r Load and, if neccessary, install the package first, echo=FALSE, message=FALSE}
 if (!require("kableExtra")){
@@ -82,6 +87,8 @@ if (!require("rgeos")){
 ## Exploratory Data Analysis
 
 The data used for the analyis is imported and tidied.
+
+Import the datasets required from the ATUS [@ATUS] corpus of data. Summary and CPS files are used primarily.
 
 ```{r Import Data, echo=FALSE, message=FALSE}
 ATUS_dataset <- import("atussum_0317.csv", setclass = "tibble")    # import raw summary data as TIBBLE
@@ -330,7 +337,7 @@ part_tu04_sex_TRCHILDNUM_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYE
 The suitability of the model is checked using an F test. It shows that is a significant improvement over the original model.
 
 ```{r Suitability of the model, echo=FALSE}
- part_tu04_summary_model_anova <- glm(part_tu04 ~ ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data, family = quasi(link = "log", variance = "mu^2"),
+part_tu04_summary_model_anova <- glm(part_tu04 ~ ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data, family = quasi(link = "log", variance = "mu^2"),
                               mustart = rep(5, n2))
 ANOVA_for_sex <- anova(part_tu04_summary_model_anova, part_tu04_sex_model, test="F")
 ```
@@ -617,10 +624,6 @@ Gender.Roles.Data$Housework <- rowSums(Housework)
 Gender.Roles.Data$Food.Preparation <- rowSums(Food.Preparation)
 Gender.Roles.Data$Childcare <- rowSums(select(Childcare, t030101:t030399))
 
-# Encode Gender as M and F rather than a number
-Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 1] <- "M"
-Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 2] <- "F"
-
 # Join this dataset with the CPS states info by unique id number of particiapnt
 Gender.Roles.Data <- inner_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASEID')
 ```
@@ -661,6 +664,8 @@ Split the full dataset into `Train`, `Validate` and `Plotting` subsets, where `T
 ```{r, cache=TRUE}
 Gender.Roles.Train <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 == 0)
 Gender.Roles.Validate <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 != 0)
+Gender.Roles.Train
+Gender.Roles.Validate
 Gender.Roles.Plotting <- filter(Gender.Roles.Data, month(TUDIARYDATE) != 7)
 ```
 
@@ -680,7 +685,6 @@ for (i in 4:17) {
 fit.models.and.plot <- function(Data, variable, mu) {
     # Start building models for the data
     n <- nrow(Data)
-    # Commented code contrains different number of splines, it was decided to use as many splines as there are years in the data
     # model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
     model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(mu, n))
     model2 <- update(model1, . ~ . + TESEX)
@@ -697,7 +701,6 @@ fit.models.and.plot <- function(Data, variable, mu) {
 
     df <- data.frame(age = c(filter(Data, TESEX == 'M')$TEAGE, filter(Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Data, TESEX == 'M')$TUDIARYDATE, filter(Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Data, TESEX == 'M')$TESEX, filter(Data, TESEX == 'F')$TESEX), region = c(filter(Data, TESEX == 'M')$GEREG, filter(Data, TESEX == 'F')$GEREG), generation = c(filter(Data, TESEX == "M")$TUGENERATION, filter(Data, TESEX == "F")$TUGENERATION))
 
-    # Don't want to include the Silent Generation for Working and Childcare as this generation's values are all very close to 0 which caused some issues; uninteresting
     if (variable == 'Working' | variable == 'Childcare') {
         print(ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) +
         geom_line() +
@@ -714,8 +717,8 @@ Generate plots for EDA to observe potential long-term trends over time for each 
 
 ```{r}
 fit.models.and.plot(Gender.Roles.Train, 'Working', 250)
-fit.models.and.plot(Gender.Roles.Train, 'House.Maintenance', 30)
-fit.models.and.plot(Gender.Roles.Train, 'Vehicle.Maintenance', 30)
+fit.models.and.plot(Gender.Roles.Train, 'House.Maintenance', 10)
+fit.models.and.plot(Gender.Roles.Train, 'Vehicle.Maintenance', 10)
 fit.models.and.plot(Gender.Roles.Train, 'Housework', 50)
 fit.models.and.plot(Gender.Roles.Train, 'Food.Preparation', 60)
 fit.models.and.plot(Gender.Roles.Train, 'Childcare', 50)
@@ -725,8 +728,8 @@ Generate plots to validate the trends obvserved above are consistent in the othe
 
 ```{r, cache=TRUE}
 fit.models.and.plot(Gender.Roles.Validate, 'Working', 250)
-fit.models.and.plot(Gender.Roles.Validate, 'House.Maintenance', 30)
-fit.models.and.plot(Gender.Roles.Validate, 'Vehicle.Maintenance', 30)
+fit.models.and.plot(Gender.Roles.Validate, 'House.Maintenance', 10)
+fit.models.and.plot(Gender.Roles.Validate, 'Vehicle.Maintenance', 10)
 fit.models.and.plot(Gender.Roles.Validate, 'Housework', 50)
 fit.models.and.plot(Gender.Roles.Validate, 'Food.Preparation', 60)
 fit.models.and.plot(Gender.Roles.Validate, 'Childcare', 50)
@@ -737,8 +740,8 @@ Generate plots on the entire dataset with the exception of July which is the dir
 ```{r, cache=TRUE}
 # Plot found in the Working section
 fit.models.and.plot(Gender.Roles.Plotting, 'Working', 250)
-fit.models.and.plot(Gender.Roles.Plotting, 'House.Maintenance', 30)
-fit.models.and.plot(Gender.Roles.Plotting, 'Vehicle.Maintenance', 30)
+fit.models.and.plot(Gender.Roles.Plotting, 'House.Maintenance', 10)
+fit.models.and.plot(Gender.Roles.Plotting, 'Vehicle.Maintenance', 10)
 # Plot found in the Housework section
 fit.models.and.plot(Gender.Roles.Plotting, 'Housework', 50)
 # Plot found in the Food Preparation section
