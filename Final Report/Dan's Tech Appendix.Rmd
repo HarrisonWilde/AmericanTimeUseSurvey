@@ -98,7 +98,7 @@ ATUS_dataset <- select(ATUS_dataset, -one_of(c("GEMETSTA", "GTMETSTA")))
 factor_columns <- c("PEEDUCA", "PEHSPNON", "PTDTRACE", "TELFS", "TEMJOT", "TESCHENR", "TESCHLVL", "TESEX", "TESPEMPNOT", "TRDPFTPT", "TRERNWA", "TRHOLIDAY", "TRSPFTPT", "TRSPPRES", "TUDIARYDAY", "TEHRUSLT")
 ATUS_dataset[,factor_columns] <- lapply(ATUS_dataset[,factor_columns], factor)
 
-# Create time spent and participation columns with the 17 Categories 
+# Create time spent and participation columns with the 17 Categories
 for (i in 1:9){
   assign(paste0("tu0", i), ATUS_dataset[,grep(paste0("^t0", i), names(ATUS_dataset))])
   assign(paste0("tu0",i), rowSums(get(paste0("tu0",i))))
@@ -209,7 +209,7 @@ part_tu03_kable <- kable(part_Activity_year_measures, caption = "Change in Parti
 kable_styling(part_tu03_kable, full_width = T, latex_options = c("striped", "hold_position"))
 ```
 
-It is immediately clear that the most compelling change out of the 17 activity groups over the period is in *Caring for & Helping Non-household (NonHH) Members* (tu04). 
+It is immediately clear that the most compelling change out of the 17 activity groups over the period is in *Caring for & Helping Non-household (NonHH) Members* (tu04).
 
 ```{r Best Subsets, include=FALSE}
 best_subsets <- regsubsets(part_tu04~TUYEAR + TESEX + PEEDUCA + PEHSPNON + PTDTRACE + TEAGE + TELFS + TRCHILDNUM + TRHOLIDAY + TRSPPRES, data = Data_minus_columns, nvmax = 3, force.in = c(1))
@@ -219,19 +219,19 @@ When fitting a linear model, the method of best subsets, with Year forced in, te
 
 ```{r part_tu04 Summary Model, message=FALSE, echo=FALSE, warning=FALSE}
 n1 <- nrow(part_weighted_means_data)
-part_tu04_summary_model <- glm(part_tu04 ~ ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_weighted_means_data, 
+part_tu04_summary_model <- glm(part_tu04 ~ ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_weighted_means_data,
                           family = quasi(link = "log", variance = "mu^2"),
                           mustart = rep(5, n1))
 part_tu04_summary_model_data <- as_tibble(data.frame(TUYEAR=seq(2003, 2017, length.out = 1000)))
-part_tu04_summary_predicted <- predict(part_tu04_summary_model, 
+part_tu04_summary_predicted <- predict(part_tu04_summary_model,
                                        newdata = part_tu04_summary_model_data,
                                        type = "link", se = TRUE)
-part_tu04_summary_predicted <-bind_cols(part_tu04_summary_model_data, 
+part_tu04_summary_predicted <-bind_cols(part_tu04_summary_model_data,
                                as_tibble(data.frame(fitted = exp(part_tu04_summary_predicted$fit),
                                                     ymin = exp(part_tu04_summary_predicted$fit-1.128*part_tu04_summary_predicted$se.fit), #80% confidence interval
                                                     ymax = exp(part_tu04_summary_predicted$fit+1.128*part_tu04_summary_predicted$se.fit))))
-part_tu04_summary_plot <- ggplot(part_weighted_means_data, aes(x=TUYEAR, y=part_tu04)) + 
-  geom_line(data = part_tu04_summary_predicted, aes(y=fitted), size=1) + 
+part_tu04_summary_plot <- ggplot(part_weighted_means_data, aes(x=TUYEAR, y=part_tu04)) +
+  geom_line(data = part_tu04_summary_predicted, aes(y=fitted), size=1) +
   geom_ribbon(data = part_tu04_summary_predicted, aes(y=fitted, ymin=ymin, ymax=ymax), alpha=0.1)
 ```
 
@@ -257,18 +257,18 @@ for (i in c(10:16, 18)){
 
 ```{r part_tu04 Sex Model, message=FALSE, echo=FALSE, warning=FALSE}
 n2 <- nrow(part_sex_weighted_means_data)
-part_tu04_sex_model <- glm(part_tu04 ~ -1 + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data, 
+part_tu04_sex_model <- glm(part_tu04 ~ -1 + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data,
                           family = quasi(link = "log", variance = "mu^2"),
                           mustart = rep(5, n2))
 part_tu04_sex_model_data <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017, length.out = 1000), TESEX=as.factor(c("M", "F"))))
 part_tu04_sex_predicted <- predict(part_tu04_sex_model, newdata = part_tu04_sex_model_data, type = "link", se = TRUE)
-part_tu04_sex_predicted <-bind_cols(part_tu04_sex_model_data, 
+part_tu04_sex_predicted <-bind_cols(part_tu04_sex_model_data,
                                as_tibble(data.frame(fitted = exp(part_tu04_sex_predicted$fit),
                                                     ymin = exp(part_tu04_sex_predicted$fit-1.128*part_tu04_sex_predicted$se.fit), #80% confidence interval
                                                     ymax = exp(part_tu04_sex_predicted$fit+1.128*part_tu04_sex_predicted$se.fit))))
-part_tu04_sex_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYEAR, y=part_tu04)) + 
+part_tu04_sex_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYEAR, y=part_tu04)) +
   geom_line(data = part_tu04_sex_predicted, aes(y=fitted, col=TESEX), size=1) +
-  geom_ribbon(data = filter(part_tu04_sex_predicted, TESEX =="M"), aes(y=fitted, ymin=ymin, ymax=ymax),alpha=0.1) + 
+  geom_ribbon(data = filter(part_tu04_sex_predicted, TESEX =="M"), aes(y=fitted, ymin=ymin, ymax=ymax),alpha=0.1) +
   geom_ribbon(data = filter(part_tu04_sex_predicted, TESEX =="F"), aes(y=fitted, ymin=ymin, ymax=ymax),alpha=0.1)
 ```
 
@@ -293,13 +293,13 @@ for (i in c(10:16, 18)){
   part_sex_weighted_means_TRCHILDNUM <- full_join(part_sex_weighted_means_TRCHILDNUM, summarise_at(Data_minus_columns_year_sex_grouped, vars(TRCHILDNUM), funs(weighted.mean(., TUFNWGTP))))
 }
 
-part_tu04_sex_TRCHILDNUM_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYEAR, y=part_tu04)) + 
-  geom_bar(data=part_sex_weighted_means_TRCHILDNUM, aes(x=as.numeric(as.character(TUYEAR)), y=TRCHILDNUM, fill=TESEX), stat="identity", position = "dodge", width = 0.8, alpha = 0.3) + 
+part_tu04_sex_TRCHILDNUM_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYEAR, y=part_tu04)) +
+  geom_bar(data=part_sex_weighted_means_TRCHILDNUM, aes(x=as.numeric(as.character(TUYEAR)), y=TRCHILDNUM, fill=TESEX), stat="identity", position = "dodge", width = 0.8, alpha = 0.3) +
   geom_smooth(method = "lm", data=part_sex_weighted_means_TRCHILDNUM, aes(x=as.numeric(as.character(TUYEAR)), y=TRCHILDNUM, col=TESEX), se=FALSE, linetype="dashed", size=1.5) +
   geom_line(data = part_tu04_sex_predicted, aes(x=TUYEAR, y=0.1*fitted, col=TESEX), size=1.3) +
-  geom_ribbon(data = filter(part_tu04_sex_predicted, TESEX =="M"), aes(y=0.1*fitted, ymin=0.1*ymin, ymax=0.1*ymax),alpha=0.1) + 
-  geom_ribbon(data = filter(part_tu04_sex_predicted, TESEX =="F"), aes(y=0.1*fitted, ymin=0.1*ymin, ymax=0.1*ymax),alpha=0.1) + 
-  scale_y_continuous(sec.axis = sec_axis(~.*(1/0.1), name = "Spent any time at all caring for & \n helping nonhousehold members (%) \n")) + 
+  geom_ribbon(data = filter(part_tu04_sex_predicted, TESEX =="M"), aes(y=0.1*fitted, ymin=0.1*ymin, ymax=0.1*ymax),alpha=0.1) +
+  geom_ribbon(data = filter(part_tu04_sex_predicted, TESEX =="F"), aes(y=0.1*fitted, ymin=0.1*ymin, ymax=0.1*ymax),alpha=0.1) +
+  scale_y_continuous(sec.axis = sec_axis(~.*(1/0.1), name = "Spent any time at all caring for & \n helping nonhousehold members (%) \n")) +
   scale_x_continuous(breaks = seq(2003,2017,2)) + xlab("Year") + ylab("Average number of children") + labs(color="Sex", fill="Sex") + theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 ```
 
@@ -309,9 +309,9 @@ part_tu04_sex_TRCHILDNUM_plot <- ggplot(part_sex_weighted_means_data, aes(x=TUYE
 ANOVA_for_sex <- anova(part_tu04_summary_model_anova, part_tu04_sex_model, test="F")
 ```
 
-The continuous activity data is non-negative and non-linear. Therefore a suitable model, using **Year** and **Sex** as explanatory variables, is a natural cubic spline GLM with multiplicative errors and log link. An F test shows this model is a significant improvement over the same model which does not use **Sex** as a variable, confirming the belief that is has a significant effect on participation in caring for & helping nonhousehold members. 
+The continuous activity data is non-negative and non-linear. Therefore a suitable model, using **Year** and **Sex** as explanatory variables, is a natural cubic spline GLM with multiplicative errors and log link. An F test shows this model is a significant improvement over the same model which does not use **Sex** as a variable, confirming the belief that is has a significant effect on participation in caring for & helping nonhousehold members.
 
-The plot below is a graphical interpretation of the model, built on the training data, with the average number of household children for each group of the population displayed as **bars**. 
+The plot below is a graphical interpretation of the model, built on the training data, with the average number of household children for each group of the population displayed as **bars**.
 
 ```{r part_tu04 Sex Plot with Number of Children, message=FALSE, echo=FALSE, fig.height=4}
 print(part_tu04_sex_TRCHILDNUM_plot)
@@ -325,7 +325,7 @@ lm_p_value <- pt(Year_t, part_tu04_sex_linear_model$df, lower=TRUE)
 ```
 
 ```{r Adding TRCHILDNUM to model, echo=FALSE, message=FALSE}
-#note we have only 1439 respondents with TRCHILDNUM>4 so we set these to 4 so that the algorithm converges. 
+#note we have only 1439 respondents with TRCHILDNUM>4 so we set these to 4 so that the algorithm converges.
 Data_minus_columns_year_sex_child_grouped <- Data_minus_columns
 Data_minus_columns_year_sex_child_grouped <- mutate(Data_minus_columns_year_sex_child_grouped, TRCHILDNUM = ifelse(TRCHILDNUM >4, 4, TRCHILDNUM)) %>% group_by(TUYEAR, TESEX, TRCHILDNUM)
 
@@ -346,7 +346,7 @@ for (i in c(10:16, 18)){
 }
 
 n3 <- nrow(part_sex_child_weighted_means_data)
-part_tu04_sex_child_model <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_child_weighted_means_data, 
+part_tu04_sex_child_model <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_child_weighted_means_data,
                           family = quasi(link = "log", variance = "mu^2"),
                           mustart = rep(5, n3))
 ```
@@ -355,22 +355,22 @@ part_tu04_sex_child_model <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(
 sex_child_summary_for_t_test <- summary(part_tu04_sex_child_model)
 sex_child_p_value <- coefficients(sex_child_summary_for_t_test)[1,4]
 ```
-The key observation is that, as the table suggested, over the period the participation in caring for & helping non-household members has decreased for both men and women. Building a linear model using **Sex** and **Year** and performing a t-test confirms this. There also appears to be a link between participation in caring for & helping non-household members and the number of household children. Updating the spline curve model to include the number of household children and then again testing this hypothesis with a t-test confirms this is the case. Looking at the graph, fluctuations in the average number of household children, on the whole seem to be followed by but if we check the correlations between them, they show this link is fairly weak (0.65 for Men and 0.49 for Women), suggesting there must be further reasons for this change; possibly not measured in this dataset. 
+The key observation is that, as the table suggested, over the period the participation in caring for & helping non-household members has decreased for both men and women. Building a linear model using **Sex** and **Year** and performing a t-test confirms this. There also appears to be a link between participation in caring for & helping non-household members and the number of household children. Updating the spline curve model to include the number of household children and then again testing this hypothesis with a t-test confirms this is the case. Looking at the graph, fluctuations in the average number of household children, on the whole seem to be followed by but if we check the correlations between them, they show this link is fairly weak (0.65 for Men and 0.49 for Women), suggesting there must be further reasons for this change; possibly not measured in this dataset.
 
 #Validation
 
 ```{r Validation Data Tidying, echo=FALSE, message=FALSE}
-#remove full time vs part time as has -1 
+#remove full time vs part time as has -1
 Data_minus_columns_validation <- select(ATUS_validation_data, -one_of("TRDPFTPT"))
-#remove full time vs part time spouse as has -1 
+#remove full time vs part time spouse as has -1
 Data_minus_columns_validation <- select(Data_minus_columns_validation, -one_of("TRSPFTPT"))
-#remove age of youngest child as has -1 
+#remove age of youngest child as has -1
 Data_minus_columns_validation <- select(Data_minus_columns_validation, -one_of("TRYHHCHILD"))
-#remove 2 jobs within last 7 days as has -1 
+#remove 2 jobs within last 7 days as has -1
 Data_minus_columns_validation <- select(Data_minus_columns_validation, -one_of("TEMJOT"))
-#remove enrolled at high school etc as has -1 and -3 and also question about which 
+#remove enrolled at high school etc as has -1 and -3 and also question about which
 Data_minus_columns_validation <- select(Data_minus_columns_validation, -one_of(c("TESCHENR", "TESCHLVL")))
-#remove employment status of spouse as has -1 
+#remove employment status of spouse as has -1
 Data_minus_columns_validation <- select(Data_minus_columns_validation, -one_of("TESPEMPNOT"))
 #remove weekly earnings as has -1
 Data_minus_columns_validation <- select(Data_minus_columns_validation, -one_of("TRERNWA"))
@@ -405,26 +405,26 @@ Year_t_validation <- coefficients(part_tu04_sex_linear_model_summary_validation)
 lm_p_value_validation <- pt(Year_t_validation, part_tu04_sex_linear_model_validation$df, lower=TRUE)
 ```
 
-As with EDA, but this time formally, a linear model is built using **Sex** and **Year** and a t-test performed. It gives a p-value < 0.05. This means there is sufficient evidence to conclude that the proportion of American's who participate in caring for & helping non-household members has decreased over the period 2003-2017. 
+As with EDA, but this time formally, a linear model is built using **Sex** and **Year** and a t-test performed. It gives a p-value < 0.05. This means there is sufficient evidence to conclude that the proportion of American's who participate in caring for & helping non-household members has decreased over the period 2003-2017.
 
 ```{r part_tu04 Sex Model Validation, message=FALSE, echo=FALSE, warning=FALSE}
 n2_validation <- nrow(part_sex_weighted_means_data_validation)
-part_tu04_sex_model_validation <- glm(part_tu04 ~ -1 + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data_validation, 
+part_tu04_sex_model_validation <- glm(part_tu04 ~ -1 + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data_validation,
                           family = quasi(link = "log", variance = "mu^2"),
                           mustart = rep(5, n2_validation))
 part_tu04_sex_model_data_validation <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017, length.out = 1000), TESEX=as.factor(c("M", "F"))))
 part_tu04_sex_predicted_validation <- predict(part_tu04_sex_model_validation, newdata = part_tu04_sex_model_data_validation, type = "link", se = TRUE)
-part_tu04_sex_predicted_validation <-bind_cols(part_tu04_sex_model_data_validation, 
+part_tu04_sex_predicted_validation <-bind_cols(part_tu04_sex_model_data_validation,
                                                as_tibble(data.frame(fitted = exp(part_tu04_sex_predicted_validation$fit),
                                                                     ymin = exp(part_tu04_sex_predicted_validation$fit-1.128*part_tu04_sex_predicted_validation$se.fit), #80% confidence interval
                                                                     ymax = exp(part_tu04_sex_predicted_validation$fit+1.128*part_tu04_sex_predicted_validation$se.fit))))
-part_tu04_sex_plot_validation <- ggplot(part_sex_weighted_means_data_validation, aes(x=TUYEAR, y=part_tu04)) + 
+part_tu04_sex_plot_validation <- ggplot(part_sex_weighted_means_data_validation, aes(x=TUYEAR, y=part_tu04)) +
   geom_line(data = part_tu04_sex_predicted_validation, aes(y=fitted, col=TESEX), size=1) +
-  geom_ribbon(data = filter(part_tu04_sex_predicted_validation, TESEX =="M"), aes(y=fitted, ymin=ymin, ymax=ymax),alpha=0.1) + 
+  geom_ribbon(data = filter(part_tu04_sex_predicted_validation, TESEX =="M"), aes(y=fitted, ymin=ymin, ymax=ymax),alpha=0.1) +
   geom_ribbon(data = filter(part_tu04_sex_predicted_validation, TESEX =="F"), aes(y=fitted, ymin=ymin, ymax=ymax),alpha=0.1)
 ```
 
-The initial thoughts about the link with number of household children, from the EDA, again needed to be tested. A new model of the same structure (natural spline with log link and multiplicative error) was built. A formal t-test could then be completed on an updat of this model which includes the number of household children. 
+The initial thoughts about the link with number of household children, from the EDA, again needed to be tested. A new model of the same structure (natural spline with log link and multiplicative error) was built. A formal t-test could then be completed on an updat of this model which includes the number of household children.
 
 ```{r Adding TRCHILDNUM to model Validation, echo=FALSE, message=FALSE}
 Data_minus_columns_year_sex_child_grouped_validation <- Data_minus_columns_validation
@@ -447,7 +447,7 @@ for (i in c(10:16, 18)){
 }
 
 n3_validation <- nrow(part_sex_child_weighted_means_data_validation)
-part_tu04_sex_child_model_validation <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_child_weighted_means_data_validation, 
+part_tu04_sex_child_model_validation <- glm(part_tu04 ~ -1 + TRCHILDNUM + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_child_weighted_means_data_validation,
                           family = quasi(link = "log", variance = "mu^2"),
                           mustart = rep(5, n3_validation))
 ```
@@ -457,20 +457,20 @@ sex_child_summary_for_t_test_validation <- summary(part_tu04_sex_child_model_val
 sex_child_p_value_validation <- coefficients(sex_child_summary_for_t_test_validation)[1,4]
 ```
 
-With a p-value << 0.05, this test confirms this belief in the validation data. 
+With a p-value << 0.05, this test confirms this belief in the validation data.
 
 ```{r Plotting Data Tidying, echo=FALSE, message=FALSE}
-#remove full time vs part time as has -1 
+#remove full time vs part time as has -1
 Data_minus_columns_plotting <- select(ATUS_plotting_data, -one_of("TRDPFTPT"))
-#remove full time vs part time spouse as has -1 
+#remove full time vs part time spouse as has -1
 Data_minus_columns_plotting <- select(Data_minus_columns_plotting, -one_of("TRSPFTPT"))
-#remove age of youngest child as has -1 
+#remove age of youngest child as has -1
 Data_minus_columns_plotting <- select(Data_minus_columns_plotting, -one_of("TRYHHCHILD"))
-#remove 2 jobs within last 7 days as has -1 
+#remove 2 jobs within last 7 days as has -1
 Data_minus_columns_plotting <- select(Data_minus_columns_plotting, -one_of("TEMJOT"))
-#remove enrolled at high school etc as has -1 and -3 and also question about which 
+#remove enrolled at high school etc as has -1 and -3 and also question about which
 Data_minus_columns_plotting <- select(Data_minus_columns_plotting, -one_of(c("TESCHENR", "TESCHLVL")))
-#remove employment status of spouse as has -1 
+#remove employment status of spouse as has -1
 Data_minus_columns_plotting <- select(Data_minus_columns_plotting, -one_of("TESPEMPNOT"))
 #remove weekly earnings as has -1
 Data_minus_columns_plotting <- select(Data_minus_columns_plotting, -one_of("TRERNWA"))
@@ -500,12 +500,12 @@ for (i in c(10:16, 18)){
 
 ```{r part_tu04 Sex Model Plotting, message=FALSE, echo=FALSE, warning=FALSE}
 n2_plotting <- nrow(part_sex_weighted_means_data_plotting)
-part_tu04_sex_model_plotting <- glm(part_tu04 ~ -1 + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data_plotting, 
+part_tu04_sex_model_plotting <- glm(part_tu04 ~ -1 + TESEX + TESEX:ns(TUYEAR, knots = seq(2004, 2016, 2)), data = part_sex_weighted_means_data_plotting,
                           family = quasi(link = "log", variance = "mu^2"),
                           mustart = rep(5, n2_plotting))
 part_tu04_sex_model_data_plotting <- as_tibble(expand.grid(TUYEAR=seq(2003, 2017, length.out = 1000), TESEX=as.factor(c("M", "F"))))
 part_tu04_sex_predicted_plotting <- predict(part_tu04_sex_model_plotting, newdata = part_tu04_sex_model_data_plotting, type = "link", se = TRUE)
-part_tu04_sex_predicted_plotting <-bind_cols(part_tu04_sex_model_data_plotting, 
+part_tu04_sex_predicted_plotting <-bind_cols(part_tu04_sex_model_data_plotting,
                                                as_tibble(data.frame(fitted = exp(part_tu04_sex_predicted_plotting$fit),
                                                                     ymin = exp(part_tu04_sex_predicted_plotting$fit-1.128*part_tu04_sex_predicted_plotting$se.fit), #80% confidence interval
                                                                     ymax = exp(part_tu04_sex_predicted_plotting$fit+1.128*part_tu04_sex_predicted_plotting$se.fit))))
@@ -529,12 +529,12 @@ for (i in c(10:16, 18)){
 }
 
 part_tu04_sex_TRCHILDNUM_plot_plotting <- ggplot(part_sex_weighted_means_data_plotting, aes(x=TUYEAR, y=part_tu04)) +
-  geom_bar(data=part_sex_weighted_means_TRCHILDNUM_plotting, aes(x=as.numeric(as.character(TUYEAR)), y=TRCHILDNUM, fill=TESEX), stat="identity", position = "dodge", width = 0.8, alpha = 0.3) + 
+  geom_bar(data=part_sex_weighted_means_TRCHILDNUM_plotting, aes(x=as.numeric(as.character(TUYEAR)), y=TRCHILDNUM, fill=TESEX), stat="identity", position = "dodge", width = 0.8, alpha = 0.3) +
   geom_smooth(method = "lm", data=part_sex_weighted_means_TRCHILDNUM_plotting, aes(x=as.numeric(as.character(TUYEAR)), y=TRCHILDNUM, col=TESEX), se=FALSE, linetype="dashed", size=1.5) +
   geom_line(data = part_tu04_sex_predicted_plotting, aes(x=TUYEAR, y=0.1*fitted, col=TESEX), size=1.3) +
   geom_ribbon(data = filter(part_tu04_sex_predicted_plotting, TESEX =="M"), aes(y=0.1*fitted, ymin=0.1*ymin, ymax=0.1*ymax),alpha=0.1) +
   geom_ribbon(data = filter(part_tu04_sex_predicted_plotting, TESEX =="F"), aes(y=0.1*fitted, ymin=0.1*ymin, ymax=0.1*ymax),alpha=0.1) +
-  scale_y_continuous(sec.axis = sec_axis(~.*(1/0.1), name = "Spent any time at all caring for & \n helping nonhousehold members (%) \n")) + 
+  scale_y_continuous(sec.axis = sec_axis(~.*(1/0.1), name = "Spent any time at all caring for & \n helping nonhousehold members (%) \n")) +
   scale_x_continuous(breaks = seq(2003,2017,2)) + xlab("Year") + ylab("Average number of children") + labs(color="Sex", fill="Sex") + theme(axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)))
 ```
 
@@ -545,31 +545,34 @@ print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 
 
 
-```{r, cache=TRUE}
+Apply some reformatting to the data imported previously to better fit the exploratory analysis to be carried out. This includes the creation of a `TUBIRTHYEAR` feature to be used in separating people into different generations (Millenials, Baby Boomers etc.) represented by another feature called `TUGENERATION`. The `ATUS.CPS` dataset is then filtered to select regional data which can be joined to the dataset created so far for EDA.
 
-# Get birth year as a variable for purpose of classifying generation
+```{r, cache=TRUE}
+# Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
 ATUS_dataset$TUBIRTHYEAR <- ATUS_dataset$TUYEAR - ATUS_dataset$TEAGE
-# Classify Generations 
-ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation", 
+ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation",
     ifelse(ATUS_dataset$TUBIRTHYEAR < 1965, "Baby Boomers",
         ifelse(ATUS_dataset$TUBIRTHYEAR < 1981, "Generation X", "Millennials")))
+
 # Filter CPS down to just relevant variables. GEDSTFIPS is state, GEDIV is division and GEREG is region
 ATUS.CPS.States <- select(ATUS.CPS, TUCASEID, GESTFIPS, GEDIV, GEREG)
 ATUS.CPS.States <- distinct(ATUS.CPS.States)
-# Create variables to be added to a data frame with relevant gender activities 
+```
+
+Next, collections of variable representing traditional gender roles can be extracted. `ATUS_dataset` can then be subsetted to 'Gender.Roles.Data', including only relevant variables. Each of the collections of gender role variables can be appended to this dataset by summing over all of the relevant sub-variables. E.g. `t05` and all suffixes of this expression represent time spent working, so these can be summed over and collected under one variable in `Gender.Roles.Data$Working`.
+
+```{r, cache=TRUE}
+# Create a data frame from relevant variables within ATUS Summary
+Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
+
+# Create variables to be added to a data frame with relevant gender activities
 Working <- ATUS_dataset[, grep("^t05", names(ATUS_dataset))]
 House.Maintenance <- ATUS_dataset[, grep("^t0204", names(ATUS_dataset))]
 Vehicle.Maintenance <- ATUS_dataset[, grep("^t0207", names(ATUS_dataset))]
 Housework <- ATUS_dataset[, grep("^t0201", names(ATUS_dataset))]
 Food.Preparation <- ATUS_dataset[, grep("^t0202", names(ATUS_dataset))] + ATUS_dataset$t070101 + ATUS_dataset$t070103
 Childcare <- ATUS_dataset[, grep("^t03", names(ATUS_dataset))]
-```
 
-```{r, cache=TRUE}
-# Create a data frame from relevant variables within ATUS Summary
-# Childnum there for future use
-Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TRCHILDNUM, TUDIARYDATE, TUGENERATION)
-# Join this dataset with the CPS states info by unique id number of particiapnt
 # Add in relevant categories
 Gender.Roles.Data$Working <- rowSums(Working)
 Gender.Roles.Data$House.Maintenance <- rowSums(House.Maintenance)
@@ -577,16 +580,18 @@ Gender.Roles.Data$Vehicle.Maintenance <- rowSums(Vehicle.Maintenance)
 Gender.Roles.Data$Housework <- rowSums(Housework)
 Gender.Roles.Data$Food.Preparation <- rowSums(Food.Preparation)
 Gender.Roles.Data$Childcare <- rowSums(select(Childcare, t030101:t030399))
-# Join this dataset with the CPS states info by unique id number of particiapnt
-Gender.Roles.Data <- inner_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASEID')
-Gender.Roles.Data <- filter(Gender.Roles.Data)
+
+# Encode Gender as M and F rather than a number
 Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 1] <- "M"
 Gender.Roles.Data$TESEX[Gender.Roles.Data$TESEX == 2] <- "F"
+
+# Join this dataset with the CPS states info by unique id number of particiapnt
+Gender.Roles.Data <- inner_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASEID')
 ```
 
+
+
 ```{r, cache=TRUE}
-# weighted.valuesM <- c()
-# weighted.valuesF <- c()
 Gender.Roles.Differences <- data.frame('Year' = c(), 'Month' = c(), 'Variable' = c(), 'Generation' = c(), 'Difference' = c())
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
     Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
@@ -615,13 +620,18 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
 }
 ```
 
+Split the full dataset into `Train`, `Validate` and `Plotting` subsets, where `Train` includes all of the even-numbered months, `Validate` contains all of the odd-numbered months
+
 ```{r, cache=TRUE}
 Gender.Roles.Train <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 == 0)
 Gender.Roles.Validate <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 != 0)
+Gender.Roles.Plotting <- filter(Gender.Roles.Data, month(TUDIARYDATE) != 7)
 ```
 
+Below is a function which fits models on the passed dataset (one of the ones defined above) and then generates predictions with which plots can be made. This function is called multiple times below with appropriate `mu` start values passed to ensure the `glm()` algorithm converges. These plots are used extensively in the Gender Roles section of the report.
+
 ```{r, cache=TRUE}
-# Make a variable for all years. 
+# Make a vector containing each year as a Date object to be used in generating splines for the models
 Dates = c()
 for (i in 4:17) {
     if (i < 10) {
@@ -630,12 +640,13 @@ for (i in 4:17) {
         Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
     }
 }
-# Commented out lines show how to introduce knots to the models
-for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
+
+fit.models.and.plot <- function(Data, variable, mu) {
     # Start building models for the data
-    n <- nrow(Gender.Roles.Train)
-    # model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Gender.Roles.Train, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-    model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Gender.Roles.Train, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+    n <- nrow(Data)
+    # Commented code contrains different number of splines, it was decided to use as many splines as there are years in the data
+    # model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
+    model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(mu, n))
     model2 <- update(model1, . ~ . + TESEX)
     # model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
     model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
@@ -643,83 +654,59 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
     model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
     # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
     # Use same method as in lab 5 to plot them
-    # change the model number in the predict functions below for different models
-    male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Train, TESEX == 'M'), se = TRUE, type = "response")
-    female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Train, TESEX == 'F'), se = TRUE, type = "response")
-    df <- data.frame(age = c(filter(Gender.Roles.Train, TESEX == 'M')$TEAGE, filter(Gender.Roles.Train, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Train, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Train, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Train, TESEX == 'M')$TESEX, filter(Gender.Roles.Train, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Train, TESEX == 'M')$GEREG, filter(Gender.Roles.Train, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Train, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Train, TESEX == "F")$TUGENERATION))
-    model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
-    geom_line() + 
-    geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey") 
-    print(model3_plot)
-}
-```
-Validate the data
 
-```{r, cache=TRUE}
-# Make a variable for all years. 
-Dates <- c()
-for (i in 4:17) {
-    if (i < 10) {
-        Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
+    # change the model number in the predict functions below for different models
+    male.prediction <- predict.glm(model5, newdata = filter(Data, TESEX == 'M'), se = TRUE, type = "response")
+    female.prediction <- predict.glm(model5, newdata = filter(Data, TESEX == 'F'), se = TRUE, type = "response")
+
+    df <- data.frame(age = c(filter(Data, TESEX == 'M')$TEAGE, filter(Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Data, TESEX == 'M')$TUDIARYDATE, filter(Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Data, TESEX == 'M')$TESEX, filter(Data, TESEX == 'F')$TESEX), region = c(filter(Data, TESEX == 'M')$GEREG, filter(Data, TESEX == 'F')$GEREG), generation = c(filter(Data, TESEX == "M")$TUGENERATION, filter(Data, TESEX == "F")$TUGENERATION))
+
+    # Don't want to include the Silent Generation for Working and Childcare as this generation's values are all very close to 0 which caused some issues; uninteresting
+    if (variable == 'Working' | variable == 'Childcare') {
+        print(ggplot(filter(df, generation != "Silent Generation"), aes(x=date, y=prediction, colour=type)) +
+        geom_line() +
+        geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey"))
     } else {
-        Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
+        print(ggplot(df, aes(x=date, y=prediction, colour=type)) +
+        geom_line() +
+        geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation, nrow = 1) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey"))
     }
 }
-# Commented out lines show how to introduce knots to the models
-for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
-    # Start building models for the data
-    n <- nrow(Gender.Roles.Validate)
-    # model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Gender.Roles.Validate, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-    model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Gender.Roles.Validate, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-    model2 <- update(model1, . ~ . + TESEX)
-    # model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
-    model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-    model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-    model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-    # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-    # Use same method as in lab 5 to plot them
-    # change the model number in the predict functions below for different models
-    male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Validate, TESEX == 'M'), se = TRUE, type = "response")
-    female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Validate, TESEX == 'F'), se = TRUE, type = "response")
-    df <- data.frame(age = c(filter(Gender.Roles.Validate, TESEX == 'M')$TEAGE, filter(Gender.Roles.Validate, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Validate, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Validate, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Validate, TESEX == 'M')$TESEX, filter(Gender.Roles.Validate, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Validate, TESEX == 'M')$GEREG, filter(Gender.Roles.Validate, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Validate, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Validate, TESEX == "F")$TUGENERATION))
-    model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
-    geom_line() + 
-    geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey") 
-    print(model3_plot)
-}
 ```
-Do on entire dataset
+
+Generate plots for EDA to observe potential long-term trends over time for each of the chosen variables to investigate. `mu` values were experimented with once the data was first observe to roughly fall within the range of plotted values for each model.
+
+```{r}
+fit.models.and.plot(Gender.Roles.Train, 'Working', 250)
+fit.models.and.plot(Gender.Roles.Train, 'House.Maintenance', 30)
+fit.models.and.plot(Gender.Roles.Train, 'Vehicle.Maintenance', 30)
+fit.models.and.plot(Gender.Roles.Train, 'Housework', 50)
+fit.models.and.plot(Gender.Roles.Train, 'Food.Preparation', 60)
+fit.models.and.plot(Gender.Roles.Train, 'Childcare', 50)
+```
+
+Generate plots to validate the trends obvserved above are consistent in the other half of the data.
 
 ```{r, cache=TRUE}
-# Make a variable for all years. 
-Dates <- c()
-for (i in 4:17) {
-    if (i < 10) {
-        Dates[i-3] <- paste(paste0("200", i), "01", "01", sep = "-")
-    } else {
-        Dates[i-3] <- paste(paste0("20", i), "01", "01", sep = "-")
-    }
-}
-# Commented out lines show how to introduce knots to the models
-for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
-    # Start building models for the data
-    n <- nrow(Gender.Roles.Data)
-    # model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE, knots = (c(as.Date("2006-01-01"), as.Date("2009-01-01"), as.Date("2012-01-01"), as.Date("2015-01-01"))))')), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-    model1 <- glm(as.formula(paste0('weighted.',variable,' ~ ns(TUDIARYDATE)')), data = Gender.Roles.Data, family = quasi(link = "log", variance = "mu^2"), mustart = rep(10, n))
-    model2 <- update(model1, . ~ . + TESEX)
-    # model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = (c(as.Date('2006-01-01'), as.Date('2009-01-01'), as.Date('2012-01-01'), as.Date('2015-01-01')))))
-    model3 <- update(model1, . ~ -1 + TESEX + TESEX:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-    model4 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-    model5 <- update(model3, .~. + TUGENERATION + TUGENERATION:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-    # model5 <- update(model3, .~. + GEREG + GEREG:ns(TUDIARYDATE, knots = c(as.Date(Dates))))
-    # Use same method as in lab 5 to plot them
-    # change the model number in the predict functions below for different models
-    male.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'M'), se = TRUE, type = "response")
-    female.prediction <- predict.glm(model5, newdata = filter(Gender.Roles.Data, TESEX == 'F'), se = TRUE, type = "response")
-    df <- data.frame(age = c(filter(Gender.Roles.Data, TESEX == 'M')$TEAGE, filter(Gender.Roles.Data, TESEX == 'F')$TEAGE), prediction = c(male.prediction$fit, female.prediction$fit), date = c(filter(Gender.Roles.Data, TESEX == 'M')$TUDIARYDATE, filter(Gender.Roles.Data, TESEX == 'F')$TUDIARYDATE), prediction_error = c(1.96*male.prediction$se.fit, 2*female.prediction$se.fit), type = c(filter(Gender.Roles.Data, TESEX == 'M')$TESEX, filter(Gender.Roles.Data, TESEX == 'F')$TESEX), region = c(filter(Gender.Roles.Data, TESEX == 'M')$GEREG, filter(Gender.Roles.Data, TESEX == 'F')$GEREG), generation = c(filter(Gender.Roles.Data, TESEX == "M")$TUGENERATION, filter(Gender.Roles.Data, TESEX == "F")$TUGENERATION))
-    model3_plot <- ggplot(df, aes(x=date, y=prediction, colour=type)) + 
-    geom_line() + 
-    geom_ribbon(aes(ymin = prediction - prediction_error, ymax = prediction + prediction_error), alpha = 0.2, linetype = 0) + facet_wrap(~generation) + labs(x = "Year", y = paste("Predicted",variable), title = paste("Trends in", tolower(gsub("[.]", " ", variable)), "for each generation"), caption = "Data Source: ATUS Survey") 
-    print(model3_plot)
-}
+fit.models.and.plot(Gender.Roles.Validate, 'Working', 250)
+fit.models.and.plot(Gender.Roles.Validate, 'House.Maintenance', 30)
+fit.models.and.plot(Gender.Roles.Validate, 'Vehicle.Maintenance', 30)
+fit.models.and.plot(Gender.Roles.Validate, 'Housework', 50)
+fit.models.and.plot(Gender.Roles.Validate, 'Food.Preparation', 60)
+fit.models.and.plot(Gender.Roles.Validate, 'Childcare', 50)
+```
+
+Generate plots on the entire dataset with the exception of July which is the directed month to exclude for this project. These plots are the ones included in the final report.
+
+```{r, cache=TRUE}
+# Plot found in the Working section
+fit.models.and.plot(Gender.Roles.Plotting, 'Working', 250)
+fit.models.and.plot(Gender.Roles.Plotting, 'House.Maintenance', 30)
+fit.models.and.plot(Gender.Roles.Plotting, 'Vehicle.Maintenance', 30)
+# Plot found in the Housework section
+fit.models.and.plot(Gender.Roles.Plotting, 'Housework', 50)
+# Plot found in the Food Preparation section
+fit.models.and.plot(Gender.Roles.Plotting, 'Food.Preparation', 60)
+# Plot found in the Childcare section
+fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
 ```
