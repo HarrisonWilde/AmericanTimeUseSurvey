@@ -468,7 +468,7 @@ kable(data.frame(Generations,Birth.Years),format = "latex", caption = "Generatio
 
 For each of the activities, a suitable generalized linear model was developed using sex, year and generation as parameters. The values used to predict each model were constructed using the weighted mean formula provided in the *ATUS User's Guide*, available online in the ATUS Survey Documentation. Splines were added to the model for each year and graphical representations were produced.
 
-**For the generation classifications, it need to reference** http://www.pewresearch.org/fact-tank/2018/03/01/millennials-overtake-baby-boomers/
+**For the generation classifications, it needs to reference** http://www.pewresearch.org/fact-tank/2018/03/01/millennials-overtake-baby-boomers/
 
 ### Working
 
