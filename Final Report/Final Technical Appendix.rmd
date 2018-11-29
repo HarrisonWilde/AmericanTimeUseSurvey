@@ -21,7 +21,7 @@ csl: ieee.csl
 
 First, load all of the required packages and install any that are missing.
 
-```{r Load and, if necessary, install the package first, echo=TRUE, message=FALSE, cache=TRUE}
+```{r Load and, if necessary, install the package first, echo=TRUE, message=FALSE}
 if (!require("kableExtra")){
   install.packages("kableExtra")
   library("kableExtra")
@@ -90,14 +90,14 @@ if (!require("rgeos")){
 
 Import the datasets required from the ATUS [@ATUS] corpus of data. Summary and CPS files are used primarily.
 
-```{r Import Data, echo=TRUE, message=FALSE, cache=TRUE}
+```{r Import Data, echo=TRUE, message=FALSE}
 ATUS_dataset <- import("atussum_0317.csv", setclass = "tibble")    # import raw summary data as TIBBLE
 ATUS.CPS <- import('atuscps_0317.csv', setclass = "tibble") # import CPS data as TIBBLE for geographical data use
 ```
 
 Now some tidying and subsetting of the data can take place for use in the first section of the report.
 
-```{r Tidying the Data, echo=TRUE, message=FALSE, cache=TRUE}
+```{r Tidying the Data, echo=TRUE, message=FALSE}
 # Check there are no other NA's other than those in format explained in the notes
 NA_check <- sum(is.na(ATUS_dataset))
 
@@ -580,7 +580,7 @@ print(part_tu04_sex_TRCHILDNUM_plot_plotting)
 
 Apply some reformatting to the data imported previously to better fit the exploratory analysis to be carried out. This includes the creation of a `TUBIRTHYEAR` feature to be used in separating people into different generations (Millenials, Baby Boomers etc.) represented by another feature called `TUGENERATION`. The `ATUS.CPS` dataset is then filtered to select regional data which can be joined to the dataset created so far for EDA.
 
-```{r, cache=TRUE}
+```{r Prepare data}
 # Get birth year as a variable for purpose of classifying generation by subtratcting age from the year the datapoint was generated
 ATUS_dataset$TUBIRTHYEAR <- ATUS_dataset$TUYEAR - ATUS_dataset$TEAGE
 ATUS_dataset$TUGENERATION <- ifelse(ATUS_dataset$TUBIRTHYEAR < 1946, "Silent Generation",
@@ -593,7 +593,7 @@ ATUS.CPS.States <- distinct(ATUS.CPS.States)
 
 Next, collections of variable representing traditional gender roles can be extracted. `ATUS_dataset` can then be subsetted to 'Gender.Roles.Data', including only relevant variables. Each of the collections of gender role variables can be appended to this dataset by summing over all of the relevant sub-variables. E.g. `t05` and all suffixes of this expression represent time spent working, so these can be summed over and collected under one variable in `Gender.Roles.Data$Working`.
 
-```{r, cache=TRUE}
+```{r Subset and generate features}
 # Create a data frame from relevant variables within ATUS Summary
 Gender.Roles.Data <- select(ATUS_dataset, TUCASEID, TESEX, TEAGE, TUFNWGTP, TUYEAR, TUDIARYDATE, TUGENERATION)
 # Create variables to be added to a data frame with relevant gender activities
@@ -616,9 +616,11 @@ Gender.Roles.Data <- inner_join(Gender.Roles.Data, ATUS.CPS.States, by = 'TUCASE
 
 This for-loop structure calculates weighted means for each possible combination of `variable`, `month`, `generation`, `region`, `year` and `sex`, which are to be used in modelling the data. The means are calculated for a demographic represented by one of these combinations and then attached to `Gender.Roles.Data` so that all of the individuals within that demographic / that conform to that combination have a weighted mean value for each variable.
 
+Note that `region` is appended but was not used extensively in the final report. It was an area of interest for EDA but more interesting hypotheses could be formed using `generation` and so this was chosen instead.
+
 This for loop also calculates a `Gender.Roles.Differences` data frame to store the differences between genders in the weighted mean values corresponding to each combination of `variable`, `month`, `generation` and `year`. These differences can then be used to perform statistical tests on the changes over the given period of data in the time use within each of the investigated variables to study how gender roles have changed.
 
-```{r, cache=TRUE}
+```{r Calculate weighted means}
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
     Gender.Roles.Data[,paste0('weighted.', variable)] <- 0
     for (generation in c("Silent Generation", "Baby Boomers", "Generation X", "Millennials")) {
@@ -644,7 +646,7 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
 
 Split the full dataset into `Train`, `Validate` and `Plotting` subsets, where `Train` includes all of the even-numbered months, `Validate` contains all of the odd-numbered months. `Plotting` includes all of the months except July as required for the task, it is this data that is used for plots in the final report.
 
-```{r, cache=TRUE}
+```{r}
 Gender.Roles.Train <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 == 0)
 Gender.Roles.Validate <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 != 0)
 Gender.Roles.Plotting <- filter(Gender.Roles.Data, month(TUDIARYDATE) != 7)
@@ -652,7 +654,7 @@ Gender.Roles.Plotting <- filter(Gender.Roles.Data, month(TUDIARYDATE) != 7)
 
 Below is a function which fits models on the passed dataset (one of the ones defined above) and then generates predictions with which plots can be made. This function is called multiple times below with appropriate `mu` start values passed to ensure the `glm()` algorithm converges. These plots are used extensively in the Gender Roles section of the report.
 
-```{r, cache=TRUE}
+```{r Model function definition}
 # Make a vector containing each year as a Date object to be used in generating splines for the models
 Dates = c()
 for (i in 4:17) {
@@ -699,7 +701,7 @@ fit.models.and.plot <- function(Data, variable, mu) {
 
 Generate plots for EDA to observe potential long-term trends over time for each of the chosen variables to investigate. `mu` values were experimented with once the data was first observed so that they roughly fall within the range of plotted values for each model. All of the plots show separate curves for male and female, as this was deemed to be more informative and interesting for the reader than plotting an engineered difference between the two.
 
-```{r, cache = TRUE}
+```{r Plot training models}
 fit.models.and.plot(Gender.Roles.Train, 'Working', 250)
 fit.models.and.plot(Gender.Roles.Train, 'House.Maintenance', 10)
 fit.models.and.plot(Gender.Roles.Train, 'Vehicle.Maintenance', 10)
@@ -712,7 +714,7 @@ Generate plots to validate the trends observed above are consistent in the other
 
 ## Validation and Presentation
 
-```{r, cache=TRUE}
+```{r Plot validation models}
 fit.models.and.plot(Gender.Roles.Validate, 'Working', 250)
 fit.models.and.plot(Gender.Roles.Validate, 'House.Maintenance', 10)
 fit.models.and.plot(Gender.Roles.Validate, 'Vehicle.Maintenance', 10)
@@ -723,7 +725,7 @@ fit.models.and.plot(Gender.Roles.Validate, 'Childcare', 50)
 
 Generate plots on the entire dataset with the exception of July which is the directed month to exclude for this project. These plots are the ones included in the final report in order to conform with the requests of those who set the task. It is mentioned in the report that `House.Maintenance` and `Vehicle.Maintenance` are relatively uninteresting so no plots for these were included in the report to conserve space.
 
-```{r, cache=TRUE}
+```{r Plots for final report}
 # Plot found in the Working section
 fit.models.and.plot(Gender.Roles.Plotting, 'Working', 250)
 # Plot found in the Housework section
@@ -736,7 +738,7 @@ fit.models.and.plot(Gender.Roles.Plotting, 'Childcare', 50)
 
 Create a `Gender.Roles.Differences` data frame which calculates the weighted means for each combination of `sex`, `variable` and `year` on a dataset only containing data from the defined validation months, these are then used to validate the hypotheses made earlier in the report. This process is quoted in the report but not included as it is potentially more statistical and complex than necessary for conveying the point of validation and $t$-tests / $p$-values behind said validation.
 
-```{r}
+```{r Gender difference data frame generation}
 Gender.Roles.Validate.Dif <- filter(Gender.Roles.Data, month(TUDIARYDATE) %% 2 != 0)
 Gender.Roles.Differences <- data.frame('Year' = c(), 'Variable' = c(), 'Difference' = c())
 for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "Housework", "Food.Preparation", "Childcare")) {
@@ -756,7 +758,7 @@ for (variable in c("Working", "House.Maintenance", "Vehicle.Maintenance", "House
 
 Code for running $t$-tests. the data set created above is filtered by variable (excluding `House.Maintenance` and `Vehicle.Maintenance` as these did not appear particularly interesting in the EDA as mentioned earlier) then a linear model is fitted along the datapoints, there is one point for each year. The summary for each model is then printed to allow for observation of the $t$-statistic and associated $p$-values. The `pt()` function can then be used on the coefficients extracted from the summary to conclude a one-tailed significance $t$-test. Note that some values come back as 0.9... because of the negative differences, these results still align with our hypotheses and all of the $p$-values indicate significance.
 
-```{r}
+```{r t tests}
 for (variable in c("Working", "Housework", "Food.Preparation", "Childcare")) {
     print(variable)
     Filtered.Data <- filter(Gender.Roles.Differences, Variable == variable)
@@ -771,11 +773,9 @@ for (variable in c("Working", "Housework", "Food.Preparation", "Childcare")) {
 
 The following plots show the low participation rate of Vehicle Maintenance and House Maintenance as noted in the report.  
 
-```{r}
+```{r Low participation evidence}
 ggplot(Gender.Roles.Data, aes(x = TUYEAR, y = 100*(House.Maintenance > 0))) + geom_smooth() + labs(x = "Year", y = "Particpation Rate (%)", title = "Particpation rate of house maintenance", caption = "Data Source:ATUS Survey")
 ggplot(Gender.Roles.Data, aes(x = TUYEAR, y = 100*(Vehicle.Maintenance > 0))) + geom_smooth() + labs(x = "Year", y = "Particpation Rate (%)", title = "Particpation rate of vehicle maintenance", caption = "Data Source:ATUS Survey")
 ```
-
-# Map Plot
 
 # References
