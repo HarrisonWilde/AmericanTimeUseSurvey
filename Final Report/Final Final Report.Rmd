@@ -710,7 +710,7 @@ Will do tomorrow morning, someone else feel free to have a go.
 
 One of the major limitations imposed on this research is the length of the period within which the data was gathered: 15 years is a short amount of time to observe trends amongst such a large population. This meant that often the data had to first be subsetted or transformed as no immediate trends were visible at the surface, this led to sporadic subset size (as mentioned with respect to *Vehicle* and *House Maintenance*) due to the number of filters required to get down to the demographics that were desirable to investigate.
 
-Another notable limitation is the reliance on people to remember the way in which they spend their time. It is likely that they would forget smaller tasks and focus on more memorable or time-consuming, this issue is excaserbated due to data only being collected for the previous 24 hours rather than over a larger period for each respondent's data point.
+Another notable limitation is the reliance on people to remember the way in which they spend their time. It is likely that they would forget smaller tasks and focus on more memorable or time-consuming ones, this issue is excaserbated due to data only being collected for the previous 24 hours rather than over a larger period for each respondent's data point.
 
 \parindent0pt
 
