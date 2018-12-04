@@ -31,19 +31,19 @@ Hypothesise, validate and present long-term trends based on the data
 **Approach:**  
 
 - EDA  
-    + Exploring data from even months as training data (July excluded and used for validation);
+    + The dataset was split and the even months were used for exploration and model training (July excluded and used for validation);
 - Validation using left out “unseen” data
-    + Formal hypothesis tests on the initial beliefs from the EDA using the odd months (and July) as the validation data; 
+    + Formal hypothesis tests on the initial beliefs from the EDA using the odd months (including July) as the validation data; 
 - Summary plots of findings
 
 ## Tidying and Structuring the Data
 
-- Missing value were confined to 9 columns of factor variables so these were removed
+- Missing values were confined to 9 columns of factor variables so these were removed
 
 - The 17 categories were built from the activity data
 
 - As the aim is to present long-term trends, weighted means for **each year** were calculated
-    + This also allows for comparisons and ensures that each group is correctly represented in the population
+    + This allows for comparisons and ensures that each group is correctly represented in the population
 \vspace{7pt}
 
 The weighted means are then calculated using $$\overline{T_j} = \frac{\sum_{i} weight_i T_{ij}}{\sum_{i} weight_i}$$
@@ -131,7 +131,7 @@ Performing a formal $t$-test when `average number of household children` is adde
 \end{columns}
 \fontsize{5}{5}
 - Table 2 is a simplified version of Talcott Parsons’ [@10.2307/2085686] study on gender roles
-- Table 3 shows how to break down the respondents into different generation groups [@generations]  
+- Table 3 shows how to break down the respondents into different generational groups [@generations]  
 
 \fontsize{12}{12}
 - Division between genders in terms of societal roles is consistently featured in the news; evident in the “\#MeToo” movement amongst others
@@ -149,11 +149,11 @@ Performing a formal $t$-test when `average number of household children` is adde
     + Generation
     + Region
 \vspace{5pt}
-- After performing formal F-tests, comparing simpler models, the following model was settled upon for all activities
+- After performing formal F-tests and comparing simpler models, the following model was settled upon for all activities
 \vspace{5pt}
 \fontsize{7}{2}
 $Activity \sim -1 + ns(Year) + Sex + Sex:ns(Year, knots = 2003, 2005, ..., 2017) + Generation + Generation:ns(Year, knots = 2003, 2005, ..., 2017)$
-- The simpler models were variants of this model, but without sex or generational information respectively. 
+- The simpler models were variants of this model, but without sex or generational information 
 
 ## House Maintenance and Vehicle Maintenance (Males)
 
@@ -208,7 +208,7 @@ $Activity \sim -1 + ns(Year) + Sex + Sex:ns(Year, knots = 2003, 2005, ..., 2017)
 \fontsize{7}{7}
 - Except for *Millennials*, all generations have the decrease in time spent on housework. But the decrease for women is sharper than any *increase* for men, which is clear through observation of *Generation X*.
 \vspace{5pt}
-- On the other hand, the gap seems to have increased slightly for *Millennials* - both sexes are increasing the amount of time spent on housework, confounding effect of increased time due to age / moving out.
+- On the other hand, the gap seems to have increased slightly for *Millennials* - both sexes are increasing the amount of time spent on housework, there is a confounding effect of increased time due to age / moving out.
 \vspace{5pt}
 - Notably, *Millennials* also spend less time doing housework than the others.
 \vspace{5pt}
