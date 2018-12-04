@@ -179,7 +179,8 @@ $Activity \sim -1 + Sex + Sex:ns(Year, knots = 2003, 2005, ..., 2017) + Generati
 ![](Working Validation Caption.png)
 
 \fontsize{10}{10}
-- The plots show the changes in working patterns between 3 generations. **Perhaps do another plot to show overall, as generations overpower all other effects here**
+- The plots show the changes in working patterns between 3 generations. There's an increase in working time for *Millenials* as this generation begin to work. Likewise, there's a decrease in time for *Baby Boomers* as many of this generation begin to retire. 
+- *Generation X* shows that there is an increase in women working time and for, the first 13 years, a decrease in time working for men. There is a slight uptick for men working in 2016, however, this begins to return to previous lower levels in 2017. 
 \vspace{5pt}
 - The $t$-test on a population level for this gave a $p$-value of 0.047 < 0.05
 
