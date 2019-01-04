@@ -1,0 +1,16 @@
+base
+kableExtra
+dplyr
+rio
+zoo
+lubridate
+reshape2
+ggplot2
+knitr
+leaps
+modEvA
+bindrcpp
+geojsonio
+openintro
+broom
+rgeos
