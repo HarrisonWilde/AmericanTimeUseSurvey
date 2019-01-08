@@ -1,2 +1,3 @@
 # ST344 Group Project
-Place to share code and documents collaboratively.
+
+A place to share code and documents collaboratively.
